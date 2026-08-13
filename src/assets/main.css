@@ -1,0 +1,69 @@
+/* Design tokens. Every color in the app comes from here. */
+:root {
+  /* Surfaces and text */
+  --paper: #fcfcfb; /* page background, a cold white */
+  --ink: #1a1f24; /* headings and values */
+  --muted: #5c6670; /* labels, captions, axis text */
+  --hairline: #e4e6e3; /* thin divider lines and gridlines */
+
+  /* Brand and data */
+  --brand-red: #c8102e; /* ONLY for: header rule, primary button, active chip, focus ring */
+  --chart-blue: #24537b; /* the single data color for charts */
+
+  /* Score badge bands. The badge always shows the number too. */
+  --band-excellent: #0d6631; /* 85-100, white text */
+  --band-good: #3f7a1f; /* 70-84, white text */
+  --band-fair: #e7a100; /* 55-69, ink text */
+  --band-poor: #b3251e; /* below 55, white text */
+
+  /* Shape and type */
+  --radius: 6px; /* components */
+  --radius-badge: 4px; /* badges only */
+  --font-display: 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Public Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  margin: 0;
+}
+
+/* Numbers line up in columns: every digit takes the same width */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* One visible focus style everywhere, in brand red */
+:focus-visible {
+  outline: 2px solid var(--brand-red);
+  outline-offset: 2px;
+}
+
+/* Respect users who turn off animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
