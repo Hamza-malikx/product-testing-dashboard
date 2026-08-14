@@ -11,4 +11,8 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+// createApp(App).mount('#app')
+// Charts draw text on canvas, so wait for fonts before first paint
+document.fonts.ready.then(() => {
+  createApp(App).mount('#app')
+})

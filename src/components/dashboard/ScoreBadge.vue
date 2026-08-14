@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { scoreBand } from '@/config/bands'
 
 const props = defineProps<{
   score: number
@@ -7,14 +8,7 @@ const props = defineProps<{
   showLabel?: boolean
 }>()
 
-// One verdict system for the whole app.
-// The badge always shows the number, so color is never the only signal.
-const band = computed(() => {
-  if (props.score >= 85) return { word: 'Excellent', css: 'excellent' }
-  if (props.score >= 70) return { word: 'Good', css: 'good' }
-  if (props.score >= 55) return { word: 'Fair', css: 'fair' }
-  return { word: 'Poor', css: 'poor' }
-})
+const band = computed(() => scoreBand(props.score))
 </script>
 
 <template>

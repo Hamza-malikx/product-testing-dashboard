@@ -8,8 +8,9 @@ import payloadJson from '@/data/payload.json'
 import { parsePayload, PayloadError } from '@/data/parsePayload'
 import { selectDataForTier } from '@/data/selectDataForTier'
 import type { CategoryPayload } from '@/types/models'
+import ScoreChart from '@/components/dashboard/ScoreChart.vue'
 
-const { tier } = useTier()
+const { tier, can } = useTier()
 
 // Parse once at startup. The data is static here, but we still
 // validate it like an API response and fail with a readable error.
@@ -41,6 +42,12 @@ const view = computed(() => (payload ? selectDataForTier(payload, tier.value) : 
     </header>
 
     <KpiRow :stats="view.aggregate_stats" />
+    <ScoreChart
+      v-if="can('view:charts') && view.products"
+      :products="view.products"
+      :category-average="view.aggregate_stats.avg_score"
+      :total-tested="view.aggregate_stats.total_tested"
+    />
   </main>
 
   <main v-else class="page">
