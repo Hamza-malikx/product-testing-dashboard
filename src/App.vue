@@ -15,6 +15,7 @@ import UpgradePrompt from '@/components/gating/UpgradePrompt.vue'
 import { DECOY_PRODUCTS } from '@/data/decoyProducts'
 import EfficiencyChart from '@/components/dashboard/EfficiencyChart.vue'
 
+
 const { tier, setTier } = useTier()
 
 // Parse once at startup. The data is static here, but we still

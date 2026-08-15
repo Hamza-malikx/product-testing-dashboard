@@ -5,6 +5,7 @@ import { scoreBand } from '@/config/bands'
 import { chartColors, chartFonts } from '@/config/chartTheme'
 import '@/config/echarts'
 import type { Product } from '@/types/models'
+import DashPanel from './DashPanel.vue'
 
 const props = defineProps<{ products: Product[] }>()
 
@@ -38,6 +39,7 @@ const option = computed(() => ({
     textStyle: { color: chartColors.ink, fontFamily: chartFonts.body, fontSize: 13 },
     formatter: (params: { dataIndex: number }) => {
       const p = props.products[params.dataIndex]
+      if (!p) return ''
       return [
         `<strong>${p.brand} ${p.model}</strong>`,
         `Score ${p.score} · ${scoreBand(p.score).word}`,
@@ -56,7 +58,7 @@ const option = computed(() => ({
         position: 'top',
         formatter: (params: { dataIndex: number }) => {
           const p = props.products[params.dataIndex]
-          return `${p.brand} ${p.model}`
+          return p ? `${p.brand} ${p.model}` : ''
         },
         color: chartColors.ink,
         fontFamily: chartFonts.body,
