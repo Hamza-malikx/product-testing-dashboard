@@ -10,8 +10,11 @@ import { selectDataForTier } from '@/data/selectDataForTier'
 import type { CategoryPayload, Product } from '@/types/models'
 import ScoreChart from '@/components/dashboard/ScoreChart.vue'
 import ProductTable from '@/components/dashboard/ProductTable.vue'
+import FeatureGate from '@/components/gating/FeatureGate.vue'
+import UpgradePrompt from '@/components/gating/UpgradePrompt.vue'
+import { DECOY_PRODUCTS } from '@/data/decoyProducts'
 
-const { tier, can } = useTier()
+const { tier, setTier } = useTier()
 
 // Parse once at startup. The data is static here, but we still
 // validate it like an API response and fail with a readable error.
@@ -54,18 +57,36 @@ function onRowDownload(product: Product) {
     </header>
 
     <KpiRow :stats="view.aggregate_stats" />
-    <ScoreChart
-      v-if="can('view:charts') && view.products"
-      :products="view.products"
-      :category-average="view.aggregate_stats.avg_score"
-      :total-tested="view.aggregate_stats.total_tested"
-    />
-    <ProductTable
-      v-if="can('view:products') && view.products"
-      :products="view.products"
-      :total-tested="view.aggregate_stats.total_tested"
-      @download="onRowDownload"
-    />
+    <FeatureGate capability="view:charts">
+      <ScoreChart
+        v-if="view.products"
+        :products="view.products"
+        :category-average="view.aggregate_stats.avg_score"
+        :total-tested="view.aggregate_stats.total_tested"
+      />
+      <ProductTable
+        v-if="view.products"
+        :products="view.products"
+        :total-tested="view.aggregate_stats.total_tested"
+        @download="onRowDownload"
+      />
+
+      <template #locked>
+        <ScoreChart
+          :products="DECOY_PRODUCTS"
+          :category-average="view.aggregate_stats.avg_score"
+          :total-tested="view.aggregate_stats.total_tested"
+        />
+      </template>
+
+      <template #prompt>
+        <UpgradePrompt
+          title="Model-level results are on Premium"
+          body="Your plan includes category averages. Premium adds interactive score and time-to-result comparisons for all 15 tested models."
+          @action="setTier('premium')"
+        />
+      </template>
+    </FeatureGate>
   </main>
 
   <main v-else class="page">
