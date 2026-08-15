@@ -34,7 +34,7 @@ const xBounds = computed(() => {
 const option = computed(() => ({
   animation: !prefersReducedMotion,
   animationDuration: 400,
-  grid: { left: 8, right: 24, top: 28, bottom: 44, containLabel: true },
+  grid: { left: 8, right: 24, top: 28, bottom: 44 },
   xAxis: {
     type: 'value',
     name: 'Time to result (days)',
@@ -58,10 +58,11 @@ const option = computed(() => ({
   },
   tooltip: {
     trigger: 'item',
-    backgroundColor: chartColors.paper,
-    borderColor: chartColors.hairline,
+    backgroundColor: chartColors.ink,
+    borderWidth: 0,
+    borderRadius: 6,
     padding: [10, 14],
-    textStyle: { color: chartColors.ink, fontFamily: chartFonts.body, fontSize: 13 },
+    textStyle: { color: '#f4f6f8', fontFamily: chartFonts.body, fontSize: 13 },
     formatter: (params: { dataIndex: number }) => {
       const p = props.products[params.dataIndex]
       if (!p) return ''
@@ -75,6 +76,7 @@ const option = computed(() => ({
   series: [
     {
       type: 'scatter',
+      cursor: 'default',
       data: props.products.map((p) => [p.ttr_days, p.score]),
       symbolSize: 14,
       itemStyle: { color: chartColors.blue, borderColor: chartColors.paper, borderWidth: 2 },

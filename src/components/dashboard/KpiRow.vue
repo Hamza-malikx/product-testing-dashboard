@@ -8,30 +8,33 @@ defineProps<{ stats: AggregateStats }>()
 <template>
   <section class="kpis" aria-label="Category summary">
     <div class="cell">
-      <p class="label">Average score</p>
-      <p class="value tnum">
-        {{ stats.avg_score }}<span class="unit">/100</span>
+      <p class="label microlabel">Average score</p>
+      <p class="value">
+        <span class="figure tnum">{{ stats.avg_score }}<span class="unit">/100</span></span>
         <ScoreBadge :score="stats.avg_score" variant="word" />
       </p>
     </div>
     <div class="cell">
-      <p class="label">Models tested</p>
+      <p class="label microlabel">Models tested</p>
       <p class="value tnum">{{ stats.total_tested }}</p>
     </div>
     <div class="cell">
-      <p class="label">Average time to result</p>
-      <p class="value tnum">{{ stats.avg_ttr_days }}<span class="unit">days</span></p>
+      <p class="label microlabel">Average time to result</p>
+      <p class="value">
+        <span class="figure tnum">{{ stats.avg_ttr_days }}<span class="unit">days</span></span>
+      </p>
     </div>
   </section>
 </template>
 
 <style scoped>
+/* The masthead's petrol rule frames this strip from above,
+   so it only needs its own closing hairline below */
 .kpis {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--hairline);
   border-bottom: 1px solid var(--hairline);
-  padding: 20px 0;
+  padding: 22px 0 20px;
 }
 .cell {
   padding: 0 24px;
@@ -45,11 +48,6 @@ defineProps<{ stats: AggregateStats }>()
 }
 .label {
   margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 .value {
   margin: 0;
@@ -62,11 +60,21 @@ defineProps<{ stats: AggregateStats }>()
   font-weight: 700;
   line-height: 1.1;
 }
+/* The average score is the page's conclusion; the other two are context */
+.cell:first-child .value {
+  font-size: 56px;
+  letter-spacing: -0.01em;
+}
+.cell:first-child .value :deep(.is-word) {
+  font-size: 13px;
+}
+/* The unit clings to its numeral; the flex gap only separates the chip */
 .unit {
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 400;
   color: var(--muted);
+  margin-left: 3px;
 }
 
 /* Small screens: stack the cells */

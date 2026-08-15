@@ -73,8 +73,14 @@ p {
   border-radius: var(--radius);
   padding: 8px 18px;
   cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
 }
 .cta:hover {
   background: var(--accent-hover);
+}
+.cta:active {
+  background: color-mix(in srgb, var(--accent) 78%, black);
 }
 </style>

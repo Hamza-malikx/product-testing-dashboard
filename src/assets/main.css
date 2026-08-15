@@ -55,7 +55,23 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-/* One visible focus style everywhere, in brand red */
+/* One label voice for the whole page: eyebrow, KPI labels, table
+   headers, and the rating-scale key all share this spec */
+.microlabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Selected text stays in character */
+::selection {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+/* One visible focus style everywhere, in the petrol accent */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

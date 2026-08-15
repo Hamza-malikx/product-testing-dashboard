@@ -38,10 +38,10 @@ const bestId = computed(() => sorted.value[0]?.id)
       <table>
         <thead>
           <tr>
-            <th scope="col">Brand and model</th>
-            <th scope="col">Score</th>
-            <th scope="col">Time to result</th>
-            <th scope="col">Report</th>
+            <th scope="col" class="microlabel">Brand and model</th>
+            <th scope="col" class="microlabel">Score</th>
+            <th scope="col" class="microlabel">Time to result</th>
+            <th scope="col" class="microlabel">Report</th>
           </tr>
         </thead>
         <tbody>
@@ -112,9 +112,15 @@ const bestId = computed(() => sorted.value[0]?.id)
   border-radius: var(--radius);
   padding: 7px 14px;
   cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
 }
 .primary-btn:hover {
   background: var(--accent-hover);
+}
+.primary-btn:active {
+  background: color-mix(in srgb, var(--accent) 78%, black);
 }
 /* Scrolling clips the focus tooltips, so the table only becomes
    scrollable on narrow screens where it truly needs to. */
@@ -133,13 +139,24 @@ table {
 }
 thead th {
   text-align: left;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
   padding: 10px 12px;
   border-bottom: 2px solid var(--ink);
+}
+/* Columns sit flush with the panel edges, like the KPI strip:
+   first column on the title's left axis, actions on the right edge */
+thead th:first-child,
+tbody .name-cell {
+  padding-left: 0;
+}
+thead th:last-child,
+tbody td:last-child {
+  padding-right: 0;
+  text-align: right;
+}
+/* The panel's own border closes the table; no floating last rule */
+tbody tr:last-child th,
+tbody tr:last-child td {
+  border-bottom: none;
 }
 tbody tr {
   transition: background-color 0.12s ease;
@@ -163,13 +180,16 @@ tbody td {
   color: var(--muted);
   margin-left: 8px;
 }
+/* Set like a printed award stamp */
 .best-flag {
   margin-left: 10px;
   border: 1px solid var(--ink);
   border-radius: var(--radius-badge);
-  padding: 1px 7px;
-  font-size: 11px;
+  padding: 2px 8px;
+  font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 .dl-btn {
@@ -185,10 +205,16 @@ tbody td {
   border-radius: var(--radius);
   padding: 5px 12px;
   cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
 }
 .dl-btn:hover {
   background: var(--ink);
   color: #fff;
+}
+.dl-btn:not(.locked):active {
+  transform: translateY(1px);
 }
 .dl-btn.locked {
   color: var(--muted);

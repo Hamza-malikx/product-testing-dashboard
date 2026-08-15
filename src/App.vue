@@ -42,11 +42,10 @@ function showToast(message: string) {
   toastTimer = setTimeout(() => (toast.value = ''), 2500)
 }
 
-// Reference to the real score chart, so the PDF can embed its image
-const scoreChart = ref<InstanceType<typeof ScoreChart> | null>(null)
-
 // The PDF code is loaded only here, on click. Locked plans never
 // even download it (the gate extends to the code bundle itself).
+// The report draws its own vector chart, so it never depends on
+// how the on-screen chart looks at the moment of download.
 async function downloadCategoryReport() {
   if (!view.value?.products) return
   showToast('Preparing category report...')
@@ -56,7 +55,7 @@ async function downloadCategoryReport() {
     stats: view.value.aggregate_stats,
     products: view.value.products,
     totalTested: view.value.aggregate_stats.total_tested,
-    chartImage: scoreChart.value?.getImage(),
+    withChart: true,
     fileName: `${view.value.category.toLowerCase()}-category-report`,
   })
 }
@@ -79,7 +78,7 @@ async function onRowDownload(product: Product) {
 
   <main v-if="view" class="page">
     <header class="masthead">
-      <p class="eyebrow">Category report</p>
+      <p class="eyebrow microlabel">Category report</p>
       <div class="title-row">
         <h1>{{ view.category }}</h1>
         <span class="plan-chip">{{ TIER_LABELS[tier] }} plan</span>
@@ -97,7 +96,6 @@ async function onRowDownload(product: Product) {
     <KpiRow :stats="view.aggregate_stats" />
     <FeatureGate capability="view:charts">
       <ScoreChart
-        ref="scoreChart"
         v-if="view.products"
         :products="view.products"
         :category-average="view.aggregate_stats.avg_score"
@@ -146,6 +144,17 @@ async function onRowDownload(product: Product) {
     </p>
     </div>
     </Transition>
+
+    <!-- The report's closing key: constant on every plan, so it sits
+         outside the fade. The band thresholds come from bands.ts -->
+    <footer class="colophon">
+      <span class="microlabel">Rating scale</span>
+      <span class="key-item tnum"><span class="swatch excellent" aria-hidden="true"></span>Excellent 85-100</span>
+      <span class="key-item tnum"><span class="swatch good" aria-hidden="true"></span>Good 70-84</span>
+      <span class="key-item tnum"><span class="swatch fair" aria-hidden="true"></span>Fair 55-69</span>
+      <span class="key-item tnum"><span class="swatch poor" aria-hidden="true"></span>Poor below 55</span>
+      <span class="colophon-note">Illustrative sample data · technical demonstration</span>
+    </footer>
   </main>
 
   <main v-else class="page">
@@ -166,15 +175,11 @@ async function onRowDownload(product: Product) {
 .masthead {
   border-bottom: 3px solid var(--accent);
   padding-bottom: 20px;
-  margin-bottom: 28px;
+  /* The petrol rule itself frames the KPI strip below, so no gap here */
+  margin-bottom: 0;
 }
 .eyebrow {
   margin: 0 0 4px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 .title-row {
   display: flex;
@@ -184,16 +189,21 @@ async function onRowDownload(product: Product) {
   flex-wrap: wrap;
 }
 h1 {
-  font-size: 34px;
+  font-size: 42px;
   font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
 }
+/* Set as a printed stamp, not a button: it is status, not a control */
 .plan-chip {
   border: 1px solid var(--accent);
   color: var(--accent);
-  border-radius: var(--radius);
-  padding: 3px 10px;
-  font-size: 13px;
+  border-radius: var(--radius-badge);
+  padding: 2px 8px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .subtitle {
   margin: 6px 0 0;
@@ -207,6 +217,42 @@ h1 {
   text-align: center;
   font-size: 13px;
   color: var(--muted);
+}
+.colophon {
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.swatch.excellent {
+  background: var(--band-excellent);
+}
+.swatch.good {
+  background: var(--band-good);
+}
+.swatch.fair {
+  background: var(--band-fair);
+}
+.swatch.poor {
+  background: var(--band-poor);
+}
+.colophon-note {
+  margin-left: auto;
 }
 .tier-fade-enter-active,
 .tier-fade-leave-active {

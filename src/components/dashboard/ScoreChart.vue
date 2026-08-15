@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import VChart from 'vue-echarts'
 import { scoreBand } from '@/config/bands'
 import { chartColors, chartFonts, prefersReducedMotion } from '@/config/chartTheme'
@@ -33,7 +33,7 @@ const option = computed(() => ({
   animation: !prefersReducedMotion,
   animationDuration: 400,
   // Extra top room so the category-average label sits above the bars
-  grid: { left: isNarrow.value ? 0 : 8, right: isNarrow.value ? 16 : 56, top: 30, bottom: 8, containLabel: true },
+  grid: { left: isNarrow.value ? 0 : 8, right: isNarrow.value ? 16 : 56, top: 30, bottom: 8 },
   xAxis: {
     type: 'value',
     max: 100,
@@ -54,12 +54,15 @@ const option = computed(() => ({
       fontSize: 13,
     },
   },
+  // Ink panel with light text: the same overlay language as the
+  // locked-button tooltip and the toast
   tooltip: {
     trigger: 'item',
-    backgroundColor: chartColors.paper,
-    borderColor: chartColors.hairline,
+    backgroundColor: chartColors.ink,
+    borderWidth: 0,
+    borderRadius: 6,
     padding: [10, 14],
-    textStyle: { color: chartColors.ink, fontFamily: chartFonts.body, fontSize: 13 },
+    textStyle: { color: '#f4f6f8', fontFamily: chartFonts.body, fontSize: 13 },
     formatter: (params: { dataIndex: number }) => {
       const p = sorted.value[params.dataIndex]
       if (!p) return ''
@@ -76,6 +79,7 @@ const option = computed(() => ({
   series: [
     {
       type: 'bar',
+      cursor: 'default', // bars are not clickable, so no pointer cursor
       data: sorted.value.map((p) => p.score),
       barWidth: 28,
       itemStyle: { color: chartColors.blue, borderRadius: [0, 4, 4, 0] },
@@ -116,15 +120,6 @@ const option = computed(() => ({
     },
   ],
 }))
-const chartRef = ref<InstanceType<typeof VChart> | null>(null)
-
-// Lets App.vue pull a PNG of the chart for the PDF report.
-// This needs the canvas renderer: SVG cannot export this way.
-function getImage(): string | undefined {
-  return chartRef.value?.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' })
-}
-
-defineExpose({ getImage })
 </script>
 
 <template>
@@ -133,7 +128,6 @@ defineExpose({ getImage })
     <!-- notMerge: each option update fully replaces the previous one,
          otherwise settings from the narrow layout stick after resizing -->
     <VChart
-      ref="chartRef"
       class="chart"
       :option="option"
       :update-options="{ notMerge: true }"
