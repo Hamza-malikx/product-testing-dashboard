@@ -116,8 +116,15 @@ const bestId = computed(() => sorted.value[0]?.id)
 .primary-btn:hover {
   background: #a90d27;
 }
+/* Scrolling clips the focus tooltips, so the table only becomes
+   scrollable on narrow screens where it truly needs to. */
 .table-scroll {
-  overflow-x: auto;
+  overflow: visible;
+}
+@media (max-width: 720px) {
+  .table-scroll {
+    overflow-x: auto;
+  }
 }
 table {
   width: 100%;

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import VChart from 'vue-echarts'
 import { scoreBand } from '@/config/bands'
-import { chartColors, chartFonts } from '@/config/chartTheme'
+import { chartColors, chartFonts, prefersReducedMotion } from '@/config/chartTheme'
 import '@/config/echarts'
 import type { Product } from '@/types/models'
 import DashPanel from './DashPanel.vue'
@@ -16,7 +16,17 @@ const props = defineProps<{
 // Highest score first
 const sorted = computed(() => [...props.products].sort((a, b) => b.score - a.score))
 
+// The table below the chart is the full accessible alternative;
+// this label gives screen readers the chart's own summary.
+const chartLabel = computed(
+  () =>
+    'Bar chart of product scores. ' +
+    sorted.value.map((p) => `${p.brand} ${p.model}: ${p.score}`).join(', ') +
+    `. Category average ${props.categoryAverage}.`,
+)
+
 const option = computed(() => ({
+  animation: !prefersReducedMotion,
   animationDuration: 400,
   grid: { left: 8, right: 56, top: 8, bottom: 8, containLabel: true },
   xAxis: {
@@ -72,6 +82,7 @@ const option = computed(() => ({
         lineStyle: { type: 'dashed', color: chartColors.muted, width: 1 },
         label: {
           formatter: `Category avg ${props.categoryAverage}`,
+          position: 'insideEndTop', // keeps it off the axis numbers
           color: chartColors.muted,
           fontFamily: chartFonts.body,
           fontSize: 11,
@@ -97,7 +108,7 @@ defineExpose({ getImage })
     title="Performance by model"
     :note="`Showing top ${products.length} of ${totalTested} tested products`"
   >
-    <VChart ref="chartRef" class="chart" :option="option" autoresize />
+    <VChart ref="chartRef" class="chart" :option="option" autoresize role="img" :aria-label="chartLabel" />
   </DashPanel>
 </template>
 

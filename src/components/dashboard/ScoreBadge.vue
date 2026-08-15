@@ -6,6 +6,8 @@ const props = defineProps<{
   score: number
   /** also print the band word ("Good") next to the badge */
   showLabel?: boolean
+  /** 'number' (default) puts the score in the chip; 'word' puts the band word in it */
+  variant?: 'number' | 'word'
 }>()
 
 const band = computed(() => scoreBand(props.score))
@@ -13,8 +15,10 @@ const band = computed(() => scoreBand(props.score))
 
 <template>
   <span class="wrap">
-    <span class="badge tnum" :class="band.css">{{ score }}</span>
-    <span v-if="showLabel" class="word">{{ band.word }}</span>
+    <span class="badge" :class="[band.css, variant === 'word' ? 'is-word' : 'tnum']">
+      {{ variant === 'word' ? band.word : score }}
+    </span>
+    <span v-if="showLabel && variant !== 'word'" class="word">{{ band.word }}</span>
   </span>
 </template>
 
@@ -44,6 +48,11 @@ const band = computed(() => scoreBand(props.score))
 }
 .poor {
   background: var(--band-poor);
+}
+/* Word chips sit next to large numbers, so they keep their own size */
+.is-word {
+  font-size: 12px;
+  font-weight: 600;
 }
 .word {
   color: var(--muted);

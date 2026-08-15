@@ -13,3 +13,8 @@ export const chartFonts = {
   body: "'Public Sans', 'Helvetica Neue', Arial, sans-serif",
   mono: "'IBM Plex Mono', ui-monospace, monospace",
 }
+
+// ECharts animates in JavaScript, so the CSS reduced-motion rule
+// cannot stop it. Charts read this flag instead.
+export const prefersReducedMotion =
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches

@@ -2,14 +2,24 @@
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
 import { scoreBand } from '@/config/bands'
-import { chartColors, chartFonts } from '@/config/chartTheme'
+import { chartColors, chartFonts, prefersReducedMotion } from '@/config/chartTheme'
 import '@/config/echarts'
 import type { Product } from '@/types/models'
 import DashPanel from './DashPanel.vue'
 
 const props = defineProps<{ products: Product[] }>()
 
+const chartLabel = computed(
+  () =>
+    'Scatter chart of score against time to result. ' +
+    props.products
+      .map((p) => `${p.brand} ${p.model}: score ${p.score}, ${p.ttr_days} days`)
+      .join(', ') +
+    '.',
+)
+
 const option = computed(() => ({
+  animation: !prefersReducedMotion,
   animationDuration: 400,
   grid: { left: 8, right: 24, top: 28, bottom: 44, containLabel: true },
   xAxis: {
@@ -71,7 +81,7 @@ const option = computed(() => ({
 
 <template>
   <DashPanel title="Score vs time to result" note="Top left is best: high score, fast turnaround">
-    <VChart class="chart" :option="option" autoresize />
+    <VChart class="chart" :option="option" autoresize role="img" :aria-label="chartLabel" />
   </DashPanel>
 </template>
 

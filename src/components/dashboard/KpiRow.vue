@@ -11,7 +11,7 @@ defineProps<{ stats: AggregateStats }>()
       <p class="label">Average score</p>
       <p class="value tnum">
         {{ stats.avg_score }}<span class="unit">/100</span>
-        <ScoreBadge :score="stats.avg_score" show-label />
+        <ScoreBadge :score="stats.avg_score" variant="word" />
       </p>
     </div>
     <div class="cell">
@@ -35,6 +35,7 @@ defineProps<{ stats: AggregateStats }>()
 }
 .cell {
   padding: 0 24px;
+  min-width: 0; /* lets a grid cell shrink below its content width */
 }
 .cell + .cell {
   border-left: 1px solid var(--hairline);
@@ -53,6 +54,7 @@ defineProps<{ stats: AggregateStats }>()
 .value {
   margin: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
   font-family: var(--font-display);
