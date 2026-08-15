@@ -1,6 +1,7 @@
 {
   "name": "product-testing-dashboard",
   "version": "0.0.0",
+  "packageManager": "pnpm@10.5.0",
   "private": true,
   "type": "module",
   "scripts": {
