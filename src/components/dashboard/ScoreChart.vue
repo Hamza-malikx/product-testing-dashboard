@@ -5,6 +5,7 @@ import { scoreBand } from '@/config/bands'
 import { chartColors, chartFonts } from '@/config/chartTheme'
 import '@/config/echarts'
 import type { Product } from '@/types/models'
+import DashPanel from './DashPanel.vue'
 
 const props = defineProps<{
   products: Product[]
@@ -83,42 +84,15 @@ const option = computed(() => ({
 </script>
 
 <template>
-  <section class="panel" aria-label="Performance by model">
-    <div class="panel-head">
-      <h2>Performance by model</h2>
-      <p class="note tnum">
-        Showing top {{ products.length }} of {{ totalTested }} tested products
-      </p>
-    </div>
+  <DashPanel
+    title="Performance by model"
+    :note="`Showing top ${products.length} of ${totalTested} tested products`"
+  >
     <VChart class="chart" :option="option" autoresize />
-  </section>
+  </DashPanel>
 </template>
 
 <style scoped>
-.panel {
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  margin-top: 28px;
-  background: #fff;
-}
-.panel-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-h2 {
-  font-size: 18px;
-  font-weight: 700;
-}
-.note {
-  margin: 0;
-  font-size: 13px;
-  color: var(--muted);
-}
 .chart {
   height: 240px;
 }
