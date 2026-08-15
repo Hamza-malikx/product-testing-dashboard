@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import KpiRow from '@/components/dashboard/KpiRow.vue'
 import TierSelect from '@/components/gating/TierSelect.vue'
 import { useTier } from '@/composables/useTier'
@@ -7,8 +7,9 @@ import { TIER_LABELS } from '@/config/tiers'
 import payloadJson from '@/data/payload.json'
 import { parsePayload, PayloadError } from '@/data/parsePayload'
 import { selectDataForTier } from '@/data/selectDataForTier'
-import type { CategoryPayload } from '@/types/models'
+import type { CategoryPayload, Product } from '@/types/models'
 import ScoreChart from '@/components/dashboard/ScoreChart.vue'
+import ProductTable from '@/components/dashboard/ProductTable.vue'
 
 const { tier, can } = useTier()
 
@@ -24,6 +25,17 @@ try {
 
 // Everything below only ever sees the data this plan is allowed to see
 const view = computed(() => (payload ? selectDataForTier(payload, tier.value) : null))
+
+// Small feedback message when a download starts.
+// The real PDF generation arrives in the report service step.
+const toast = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+function onRowDownload(product: Product) {
+  toast.value = `Preparing ${product.download_id}...`
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => (toast.value = ''), 2500)
+}
 </script>
 
 <template>
@@ -48,6 +60,12 @@ const view = computed(() => (payload ? selectDataForTier(payload, tier.value) : 
       :category-average="view.aggregate_stats.avg_score"
       :total-tested="view.aggregate_stats.total_tested"
     />
+    <ProductTable
+      v-if="can('view:products') && view.products"
+      :products="view.products"
+      :total-tested="view.aggregate_stats.total_tested"
+      @download="onRowDownload"
+    />
   </main>
 
   <main v-else class="page">
@@ -56,6 +74,7 @@ const view = computed(() => (payload ? selectDataForTier(payload, tier.value) : 
 
   <!-- Announces plan changes to screen readers -->
   <p class="sr-only" aria-live="polite">Now viewing as {{ TIER_LABELS[tier] }} plan</p>
+  <div v-if="toast" class="toast tnum" role="status">{{ toast }}</div>
 </template>
 
 <style scoped>
@@ -102,5 +121,17 @@ h1 {
 }
 .load-error {
   color: var(--band-poor);
+}
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: #f4f6f8;
+  font-size: 13px;
+  padding: 9px 16px;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 </style>
