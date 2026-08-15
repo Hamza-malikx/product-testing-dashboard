@@ -11,6 +11,7 @@ export type Capability =
   | 'view:aggregates' // the stats row
   | 'view:charts' // interactive charts
   | 'view:products' // product-level rows (table and chart data)
+  | 'view:advanced-charts' // the Enterprise-only efficiency chart
   | 'download:reports' // the PDF report
 
 export const TIER_PERMISSIONS: Record<Tier, ReadonlySet<Capability>> = {
@@ -20,6 +21,7 @@ export const TIER_PERMISSIONS: Record<Tier, ReadonlySet<Capability>> = {
     'view:aggregates',
     'view:charts',
     'view:products',
+    'view:advanced-charts',
     'download:reports',
   ]),
 }

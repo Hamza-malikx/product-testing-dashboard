@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useTier } from '@/composables/useTier'
 import type { Product } from '@/types/models'
 import ScoreBadge from './ScoreBadge.vue'
+import DashPanel from './DashPanel.vue'
 
 const props = defineProps<{
   products: Product[]
@@ -19,14 +20,10 @@ const bestId = computed(() => sorted.value[0]?.id)
 </script>
 
 <template>
-  <section class="panel" aria-label="Tested models">
-    <div class="panel-head">
-      <h2>Tested models</h2>
-      <p class="note tnum">
-        Showing top {{ products.length }} of {{ totalTested }} tested products
-      </p>
-    </div>
-
+  <DashPanel
+    title="Tested models"
+    :note="`Showing top ${products.length} of ${totalTested} tested products`"
+  >
     <div class="table-scroll">
       <table>
         <thead>
@@ -91,34 +88,10 @@ const bestId = computed(() => sorted.value[0]?.id)
         </tbody>
       </table>
     </div>
-  </section>
+  </DashPanel>
 </template>
 
 <style scoped>
-.panel {
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  margin-top: 28px;
-  background: #fff;
-}
-.panel-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-h2 {
-  font-size: 18px;
-  font-weight: 700;
-}
-.note {
-  margin: 0;
-  font-size: 13px;
-  color: var(--muted);
-}
 .table-scroll {
   overflow-x: auto;
 }

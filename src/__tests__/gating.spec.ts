@@ -18,6 +18,7 @@ describe('tier permissions', () => {
     expect(premium.has('view:charts')).toBe(true)
     expect(premium.has('view:products')).toBe(true)
     expect(premium.has('download:reports')).toBe(false)
+    expect(premium.has('view:advanced-charts')).toBe(false)
   })
 
   it('enterprise can do everything', () => {
@@ -26,6 +27,7 @@ describe('tier permissions', () => {
     expect(enterprise.has('view:charts')).toBe(true)
     expect(enterprise.has('view:products')).toBe(true)
     expect(enterprise.has('download:reports')).toBe(true)
+    expect(enterprise.has('view:advanced-charts')).toBe(true)
   })
 
   it('every tier has a permission set defined', () => {

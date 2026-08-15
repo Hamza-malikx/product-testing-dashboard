@@ -13,6 +13,7 @@ import ProductTable from '@/components/dashboard/ProductTable.vue'
 import FeatureGate from '@/components/gating/FeatureGate.vue'
 import UpgradePrompt from '@/components/gating/UpgradePrompt.vue'
 import { DECOY_PRODUCTS } from '@/data/decoyProducts'
+import EfficiencyChart from '@/components/dashboard/EfficiencyChart.vue'
 
 const { tier, setTier } = useTier()
 
@@ -64,6 +65,21 @@ function onRowDownload(product: Product) {
         :category-average="view.aggregate_stats.avg_score"
         :total-tested="view.aggregate_stats.total_tested"
       />
+      <FeatureGate capability="view:advanced-charts">
+        <EfficiencyChart v-if="view.products" :products="view.products" />
+
+        <template #locked>
+          <EfficiencyChart :products="DECOY_PRODUCTS" />
+        </template>
+
+        <template #prompt>
+          <UpgradePrompt
+            title="The efficiency view is on Enterprise"
+            body="See which brands deliver high scores fast. Enterprise adds the score versus time-to-result view and full PDF test reports."
+            @action="setTier('enterprise')"
+          />
+        </template>
+      </FeatureGate>
       <ProductTable
         v-if="view.products"
         :products="view.products"
