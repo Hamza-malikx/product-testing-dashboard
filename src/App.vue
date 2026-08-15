@@ -15,7 +15,6 @@ import UpgradePrompt from '@/components/gating/UpgradePrompt.vue'
 import { DECOY_PRODUCTS } from '@/data/decoyProducts'
 import EfficiencyChart from '@/components/dashboard/EfficiencyChart.vue'
 
-
 const { tier, setTier } = useTier()
 
 // Parse once at startup. The data is static here, but we still
@@ -33,13 +32,45 @@ const view = computed(() => (payload ? selectDataForTier(payload, tier.value) : 
 
 // Small feedback message when a download starts.
 // The real PDF generation arrives in the report service step.
+// Feedback toast for downloads
 const toast = ref('')
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 
-function onRowDownload(product: Product) {
-  toast.value = `Preparing ${product.download_id}...`
+function showToast(message: string) {
+  toast.value = message
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => (toast.value = ''), 2500)
+}
+
+// Reference to the real score chart, so the PDF can embed its image
+const scoreChart = ref<InstanceType<typeof ScoreChart> | null>(null)
+
+// The PDF code is loaded only here, on click. Locked plans never
+// even download it (the gate extends to the code bundle itself).
+async function downloadCategoryReport() {
+  if (!view.value?.products) return
+  showToast('Preparing category report...')
+  const { generateReport } = await import('@/services/reportPdf')
+  await generateReport({
+    category: view.value.category,
+    stats: view.value.aggregate_stats,
+    products: view.value.products,
+    totalTested: view.value.aggregate_stats.total_tested,
+    chartImage: scoreChart.value?.getImage(),
+    fileName: `${view.value.category.toLowerCase()}-category-report`,
+  })
+}
+
+async function onRowDownload(product: Product) {
+  if (!view.value) return
+  showToast(`Preparing ${product.download_id}...`)
+  const { generateReport } = await import('@/services/reportPdf')
+  await generateReport({
+    category: view.value.category,
+    products: [product],
+    totalTested: view.value.aggregate_stats.total_tested,
+    fileName: product.download_id,
+  })
 }
 </script>
 
@@ -61,6 +92,7 @@ function onRowDownload(product: Product) {
     <KpiRow :stats="view.aggregate_stats" />
     <FeatureGate capability="view:charts">
       <ScoreChart
+        ref="scoreChart"
         v-if="view.products"
         :products="view.products"
         :category-average="view.aggregate_stats.avg_score"
@@ -86,6 +118,7 @@ function onRowDownload(product: Product) {
         :products="view.products"
         :total-tested="view.aggregate_stats.total_tested"
         @download="onRowDownload"
+        @download-category="downloadCategoryReport"
       />
 
       <template #locked>

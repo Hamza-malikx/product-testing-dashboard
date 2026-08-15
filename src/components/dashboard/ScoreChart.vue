@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import VChart from 'vue-echarts'
 import { scoreBand } from '@/config/bands'
 import { chartColors, chartFonts } from '@/config/chartTheme'
@@ -81,6 +81,15 @@ const option = computed(() => ({
     },
   ],
 }))
+const chartRef = ref<InstanceType<typeof VChart> | null>(null)
+
+// Lets App.vue pull a PNG of the chart for the PDF report.
+// This needs the canvas renderer: SVG cannot export this way.
+function getImage(): string | undefined {
+  return chartRef.value?.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' })
+}
+
+defineExpose({ getImage })
 </script>
 
 <template>
@@ -88,7 +97,7 @@ const option = computed(() => ({
     title="Performance by model"
     :note="`Showing top ${products.length} of ${totalTested} tested products`"
   >
-    <VChart class="chart" :option="option" autoresize />
+    <VChart ref="chartRef" class="chart" :option="option" autoresize />
   </DashPanel>
 </template>
 

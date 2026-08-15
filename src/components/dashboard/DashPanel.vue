@@ -9,7 +9,10 @@ defineProps<{
   <section class="panel" :aria-label="title">
     <div class="panel-head">
       <h2>{{ title }}</h2>
-      <p v-if="note" class="note tnum">{{ note }}</p>
+      <div class="head-right">
+        <p v-if="note" class="note tnum">{{ note }}</p>
+        <slot name="actions" />
+      </div>
     </div>
     <slot />
   </section>
@@ -39,5 +42,11 @@ h2 {
   margin: 0;
   font-size: 13px;
   color: var(--muted);
+}
+.head-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 </style>

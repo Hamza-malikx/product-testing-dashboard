@@ -10,7 +10,7 @@ const props = defineProps<{
   totalTested: number
 }>()
 
-const emit = defineEmits<{ download: [product: Product] }>()
+const emit = defineEmits<{ download: [product: Product]; downloadCategory: [] }>()
 
 const { can } = useTier()
 
@@ -24,6 +24,16 @@ const bestId = computed(() => sorted.value[0]?.id)
     title="Tested models"
     :note="`Showing top ${products.length} of ${totalTested} tested products`"
   >
+    <template #actions>
+      <button
+        v-if="can('download:reports')"
+        type="button"
+        class="primary-btn"
+        @click="emit('downloadCategory')"
+      >
+        Download category report (PDF)
+      </button>
+    </template>
     <div class="table-scroll">
       <table>
         <thead>
@@ -92,6 +102,20 @@ const bestId = computed(() => sorted.value[0]?.id)
 </template>
 
 <style scoped>
+.primary-btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--brand-red);
+  border: none;
+  border-radius: var(--radius);
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.primary-btn:hover {
+  background: #a90d27;
+}
 .table-scroll {
   overflow-x: auto;
 }
