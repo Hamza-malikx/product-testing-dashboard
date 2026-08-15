@@ -12,7 +12,7 @@
 
   /* Score badge bands. The badge always shows the number too. */
   --band-excellent: #0d6631; /* 85-100, white text */
-  --band-good: #3f7a1f; /* 70-84, white text */
+  --band-good: #a3cc84; /* 70-84, light green, ink text */
   --band-fair: #e7a100; /* 55-69, ink text */
   --band-poor: #b3251e; /* below 55, white text */
 

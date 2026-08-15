@@ -15,7 +15,7 @@ import UpgradePrompt from '@/components/gating/UpgradePrompt.vue'
 import { DECOY_PRODUCTS } from '@/data/decoyProducts'
 import EfficiencyChart from '@/components/dashboard/EfficiencyChart.vue'
 
-const { tier, setTier } = useTier()
+const { tier, can, setTier } = useTier()
 
 // Parse once at startup. The data is static here, but we still
 // validate it like an API response and fail with a readable error.
@@ -89,6 +89,9 @@ async function onRowDownload(product: Product) {
       </p>
     </header>
 
+    <!-- Keyed by plan: switching fades the old view out and the new one in -->
+    <Transition name="tier-fade" mode="out-in">
+    <div :key="tier">
     <KpiRow :stats="view.aggregate_stats" />
     <FeatureGate capability="view:charts">
       <ScoreChart
@@ -96,7 +99,6 @@ async function onRowDownload(product: Product) {
         v-if="view.products"
         :products="view.products"
         :category-average="view.aggregate_stats.avg_score"
-        :total-tested="view.aggregate_stats.total_tested"
       />
       <FeatureGate capability="view:advanced-charts">
         <EfficiencyChart v-if="view.products" :products="view.products" />
@@ -125,7 +127,6 @@ async function onRowDownload(product: Product) {
         <ScoreChart
           :products="DECOY_PRODUCTS"
           :category-average="view.aggregate_stats.avg_score"
-          :total-tested="view.aggregate_stats.total_tested"
         />
       </template>
 
@@ -137,6 +138,12 @@ async function onRowDownload(product: Product) {
         />
       </template>
     </FeatureGate>
+
+    <p v-if="!can('view:charts')" class="plans-strip">
+      Premium adds model-level results · Enterprise adds the efficiency view and PDF test reports.
+    </p>
+    </div>
+    </Transition>
   </main>
 
   <main v-else class="page">
@@ -192,6 +199,20 @@ h1 {
 }
 .load-error {
   color: var(--band-poor);
+}
+.plans-strip {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.tier-fade-enter-active,
+.tier-fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+.tier-fade-enter-from,
+.tier-fade-leave-to {
+  opacity: 0;
 }
 .toast {
   position: fixed;

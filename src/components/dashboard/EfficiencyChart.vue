@@ -4,10 +4,13 @@ import VChart from 'vue-echarts'
 import { scoreBand } from '@/config/bands'
 import { chartColors, chartFonts, prefersReducedMotion } from '@/config/chartTheme'
 import '@/config/echarts'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import type { Product } from '@/types/models'
 import DashPanel from './DashPanel.vue'
 
 const props = defineProps<{ products: Product[] }>()
+
+const isNarrow = useMediaQuery('(max-width: 640px)')
 
 const chartLabel = computed(
   () =>
@@ -17,6 +20,16 @@ const chartLabel = computed(
       .join(', ') +
     '.',
 )
+
+// Pad the x axis past the data so no point sits on the edge with a
+// clipped label, and snap the ends to the 0.5-day tick steps.
+const xBounds = computed(() => {
+  const days = props.products.map((p) => p.ttr_days)
+  return {
+    min: Math.floor((Math.min(...days) - 0.1) * 2) / 2,
+    max: Math.ceil((Math.max(...days) + 0.1) * 2) / 2,
+  }
+})
 
 const option = computed(() => ({
   animation: !prefersReducedMotion,
@@ -28,7 +41,9 @@ const option = computed(() => ({
     nameLocation: 'middle',
     nameGap: 30,
     nameTextStyle: { color: chartColors.muted, fontFamily: chartFonts.body, fontSize: 12 },
-    scale: true,
+    min: xBounds.value.min,
+    max: xBounds.value.max,
+    interval: 0.5,
     axisLabel: { color: chartColors.muted, fontFamily: chartFonts.body, fontSize: 12 },
     splitLine: { lineStyle: { color: chartColors.hairline } },
   },
@@ -72,7 +87,7 @@ const option = computed(() => ({
         },
         color: chartColors.ink,
         fontFamily: chartFonts.body,
-        fontSize: 11,
+        fontSize: isNarrow.value ? 10 : 11,
       },
     },
   ],
@@ -81,7 +96,14 @@ const option = computed(() => ({
 
 <template>
   <DashPanel title="Score vs time to result" note="Top left is best: high score, fast turnaround">
-    <VChart class="chart" :option="option" autoresize role="img" :aria-label="chartLabel" />
+    <VChart
+      class="chart"
+      :option="option"
+      :update-options="{ notMerge: true }"
+      autoresize
+      role="img"
+      :aria-label="chartLabel"
+    />
   </DashPanel>
 </template>
 

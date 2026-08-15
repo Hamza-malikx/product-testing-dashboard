@@ -141,6 +141,12 @@ thead th {
   padding: 10px 12px;
   border-bottom: 2px solid var(--ink);
 }
+tbody tr {
+  transition: background-color 0.12s ease;
+}
+tbody tr:hover {
+  background: #f5f6f4;
+}
 tbody th,
 tbody td {
   text-align: left;

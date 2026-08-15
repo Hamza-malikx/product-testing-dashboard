@@ -41,6 +41,7 @@ const band = computed(() => scoreBand(props.score))
 }
 .good {
   background: var(--band-good);
+  color: var(--ink); /* light green needs dark text, like amber */
 }
 .fair {
   background: var(--band-fair);
