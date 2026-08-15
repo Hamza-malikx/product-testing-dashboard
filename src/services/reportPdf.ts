@@ -6,7 +6,7 @@ import type { AggregateStats, Product } from '@/types/models'
 // Colors kept in sync with src/assets/main.css
 const INK = '#1a1f24'
 const MUTED = '#5c6670'
-const RED = '#c8102e'
+const ACCENT = '#0d3a4e'
 
 export interface ReportOptions {
   category: string
@@ -51,7 +51,7 @@ export async function generateReport(opts: ReportOptions): Promise<void> {
   doc.setFont('helvetica', 'bold')
   doc.text(opts.category, margin, y)
   y += 10
-  doc.setDrawColor(RED)
+  doc.setDrawColor(ACCENT)
   doc.setLineWidth(2)
   doc.line(margin, y, pageWidth - margin, y)
   y += 18

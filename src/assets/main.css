@@ -7,7 +7,10 @@
   --hairline: #e4e6e3; /* thin divider lines and gridlines */
 
   /* Brand and data */
-  --brand-red: #c8102e; /* ONLY for: header rule, primary button, active chip, focus ring */
+  --accent: #0d3a4e; /* ONLY for: header rule, primary button, active chip, focus ring */
+  /* Hover state is generated from the accent (about 11% darker), so a
+     future accent swap stays a one-line change */
+  --accent-hover: color-mix(in srgb, var(--accent) 89%, black);
   --chart-blue: #24537b; /* the single data color for charts */
 
   /* Score badge bands. The badge always shows the number too. */
@@ -54,7 +57,7 @@ h3 {
 
 /* One visible focus style everywhere, in brand red */
 :focus-visible {
-  outline: 2px solid var(--brand-red);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

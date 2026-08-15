@@ -89,8 +89,10 @@ async function onRowDownload(product: Product) {
       </p>
     </header>
 
-    <!-- Keyed by plan: switching fades the old view out and the new one in -->
-    <Transition name="tier-fade" mode="out-in">
+    <!-- Keyed by plan: switching fades the old view out and the new one in.
+         The explicit duration makes Vue use a timer, so a missed browser
+         transition event can never leave the view stuck mid-switch -->
+    <Transition name="tier-fade" mode="out-in" :duration="180">
     <div :key="tier">
     <KpiRow :stats="view.aggregate_stats" />
     <FeatureGate capability="view:charts">
@@ -162,7 +164,7 @@ async function onRowDownload(product: Product) {
   padding: 32px 24px 64px;
 }
 .masthead {
-  border-bottom: 3px solid var(--brand-red);
+  border-bottom: 3px solid var(--accent);
   padding-bottom: 20px;
   margin-bottom: 28px;
 }
@@ -186,8 +188,8 @@ h1 {
   font-weight: 800;
 }
 .plan-chip {
-  border: 1px solid var(--brand-red);
-  color: var(--brand-red);
+  border: 1px solid var(--accent);
+  color: var(--accent);
   border-radius: var(--radius);
   padding: 3px 10px;
   font-size: 13px;

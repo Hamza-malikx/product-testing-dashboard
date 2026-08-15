@@ -68,13 +68,13 @@ p {
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  background: var(--brand-red);
+  background: var(--accent);
   border: none;
   border-radius: var(--radius);
   padding: 8px 18px;
   cursor: pointer;
 }
 .cta:hover {
-  background: #a90d27;
+  background: var(--accent-hover);
 }
 </style>

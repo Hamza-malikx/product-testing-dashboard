@@ -107,14 +107,14 @@ const bestId = computed(() => sorted.value[0]?.id)
   font-size: 13px;
   font-weight: 600;
   color: #fff;
-  background: var(--brand-red);
+  background: var(--accent);
   border: none;
   border-radius: var(--radius);
   padding: 7px 14px;
   cursor: pointer;
 }
 .primary-btn:hover {
-  background: #a90d27;
+  background: var(--accent-hover);
 }
 /* Scrolling clips the focus tooltips, so the table only becomes
    scrollable on narrow screens where it truly needs to. */
