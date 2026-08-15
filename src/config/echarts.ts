@@ -1,7 +1,7 @@
 // Register only the ECharts pieces this app uses.
 // Importing all of echarts would add ~1MB for nothing.
-// Canvas renderer on purpose: the PDF export reads the chart
-// as an image, and that only works with canvas.
+// Canvas renderer: the usual default, fastest for frequent
+// option updates like the plan switching here.
 import { BarChart, ScatterChart } from 'echarts/charts'
 import { GridComponent, MarkLineComponent, TooltipComponent } from 'echarts/components'
 import { use } from 'echarts/core'
