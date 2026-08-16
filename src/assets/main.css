@@ -6,7 +6,7 @@
   --ink: #10161a; /* headings and values */
   --ink-soft: #5b6b70; /* body text, captions */
   /* Labels and axis text. Dark enough to clear WCAG AA everywhere it
-     lands: 5.45:1 on white cards, 5.02:1 on the page background, and
+     lands: 5.45:1 on white cards, 5.03:1 on the page background, and
      still 4.77:1 over the faint ruled lines drawn on that background. */
   --ink-faint: #5e6c6f;
   --line: #e2e6e2; /* borders and dividers */
