@@ -34,6 +34,7 @@ describe('what each plan renders', () => {
     expect(html).not.toContain('BrandC')
     expect(html).not.toContain('eval_889')
     expect(html).not.toContain('DW-300')
+    // Basic does not reach the table at all, so neither control exists
     expect(wrapper.find('.download-all').exists()).toBe(false)
     expect(wrapper.find('.pdf-btn').exists()).toBe(false)
 
@@ -62,7 +63,13 @@ describe('what each plan renders', () => {
     const wrapper = await renderAs('premium')
 
     expect(wrapper.html()).toContain('BrandC')
-    expect(wrapper.find('.download-all').exists()).toBe(false)
+
+    // The report action stays on screen, locked, so the plan difference
+    // reads as disabled versus enabled rather than the control vanishing
+    const categoryButton = wrapper.find('.download-all')
+    expect(categoryButton.exists()).toBe(true)
+    expect(categoryButton.classes()).toContain('locked')
+    expect(categoryButton.attributes('aria-disabled')).toBe('true')
 
     // The per-row buttons are visible, locked, and still keyboard reachable
     const locked = wrapper.findAll('.pdf-btn.locked')
@@ -79,7 +86,9 @@ describe('what each plan renders', () => {
     const wrapper = await renderAs('enterprise')
 
     expect(wrapper.html()).toContain('BrandC')
-    expect(wrapper.find('.download-all').exists()).toBe(true)
+    const categoryButton = wrapper.find('.download-all')
+    expect(categoryButton.exists()).toBe(true)
+    expect(categoryButton.classes()).not.toContain('locked')
     expect(wrapper.findAll('.pdf-btn.locked').length).toBe(0)
     expect(wrapper.findAll('.pdf-btn').length).toBe(3)
 

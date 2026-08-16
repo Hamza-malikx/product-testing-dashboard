@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
-import { scoreBand } from '@/config/bands'
+import { byScoreDesc, scoreBand } from '@/config/bands'
 import { barGradient, chartColors, chartFonts, prefersReducedMotion } from '@/config/chartTheme'
 import '@/config/echarts'
 import { useMediaQuery } from '@/composables/useMediaQuery'
@@ -14,7 +14,7 @@ const props = defineProps<{
 }>()
 
 // Highest score first
-const sorted = computed(() => [...props.products].sort((a, b) => b.score - a.score))
+const sorted = computed(() => byScoreDesc(props.products))
 
 // On narrow screens the long model names move from the axis into the
 // bars, so the bars can use the full card width.

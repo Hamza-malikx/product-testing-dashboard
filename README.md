@@ -4,11 +4,13 @@ A single-page dashboard that shows product test results for one category (dishwa
 
 **Live demo:** https://hamza-malikx.github.io/product-testing-dashboard/
 
-The same page on each plan. Basic sees category averages with a locked preview, Premium unlocks model-level results, Enterprise adds the efficiency view and working PDF reports.
+![The dashboard on the Enterprise plan](docs/screenshot-enterprise.png)
 
-| Basic                                    | Premium                                      | Enterprise                                         |
-| ---------------------------------------- | -------------------------------------------- | -------------------------------------------------- |
-| ![Basic plan](docs/screenshot-basic.png) | ![Premium plan](docs/screenshot-premium.png) | ![Enterprise plan](docs/screenshot-enterprise.png) |
+The same page changes with the plan. Basic sees category averages with the model-level area locked behind a blurred preview, Premium unlocks the scores and the table, and Enterprise adds the efficiency view and working PDF reports.
+
+| Basic                                    | Premium                                      |
+| ---------------------------------------- | -------------------------------------------- |
+| ![Basic plan](docs/screenshot-basic.png) | ![Premium plan](docs/screenshot-premium.png) |
 
 ## Quickstart
 
@@ -19,7 +21,8 @@ pnpm install
 pnpm dev                 # dev server on http://localhost:5173
 pnpm test:unit --run     # unit tests once (omit --run for watch mode)
 pnpm build               # type check + production build
-pnpm lint                # oxlint and eslint
+pnpm check               # lint and formatting, read only
+pnpm lint                # same linters, but they rewrite files
 ```
 
 ## Part A: how the frontend works
@@ -124,11 +127,11 @@ Indexes that matter: `test_results (product_id, tested_at DESC) INCLUDE (score, 
 In this demo the whole payload goes to the browser, which is exactly the anti-pattern. In production, one request travels like this:
 
 1. **Login issues a short-lived token** (about 15 minutes) holding only the user id and org id. The plan is deliberately not a token claim: the database stays the source of truth, so a downgraded organisation loses access immediately, not when a token expires. User membership itself is trusted for the token's lifetime; the short expiry bounds that window, and a revocation list can close it entirely if needed.
-2. **Middleware resolves the entitlement on every request** from the subscriptions table (`WHERE org_id = $1 AND validity @> CURRENT_DATE`, served by the constraint index above).
+2. **Middleware resolves the entitlement on every request** from the subscriptions table (`WHERE org_id = $1 AND validity @> CURRENT_DATE`, served by the constraint index above). No active row means denied, so the system fails closed. That is one indexed lookup per request rather than a cached claim, and a short-lived cache is the escape hatch if it ever shows up in a profile.
 3. **Routes deny by default.** A Basic token calling the product-level endpoint receives a 403 before any data query runs.
 4. **Responses are built from allowlists.** The Basic endpoint runs `SELECT avg(score), count(*) ...` on the server; product rows are never selected, so there is nothing to strip and nothing to leak. Never fetch everything and filter afterwards: a blocklist is one refactor away from a leak.
-5. **Downloads use signed, expiring links.** The IDs in this payload (`eval_889`, `eval_890`, ...) count upwards and are guessable, a classic IDOR setup (insecure direct object reference: guessing IDs to fetch objects you do not own). The download endpoint checks the organisation's plan rank against the report's minimum rank, writes an audit row, and only then returns a signed URL for that single object (a link that carries proof the server issued it and stops working after about 60 seconds). Guessing IDs yields 403s and an audit trail, not files.
-6. **Defense in depth.** Parameterized queries only (values travel separately from the SQL text, so input can never become SQL); Postgres row-level security (the database itself filters rows by organisation) on tenant-owned tables as a backstop; per-user rate limiting; and an alert on bursts of 403s, because a Basic user probing Enterprise endpoints is a detection event, not just a denial.
+5. **Downloads use signed, expiring links.** The IDs in this payload (`eval_889`, `eval_890`, ...) count upwards and are guessable, a classic IDOR setup (insecure direct object reference: guessing IDs to fetch objects you do not own). The download endpoint checks the organisation's plan rank against the report's minimum rank, writes an audit row, and only then returns a signed URL for that single object (a link that carries proof the server issued it and stops working after about 60 seconds). Guessing IDs yields 403s and an audit trail, not files. The log records the identifier that was asked for, not only successful matches, so an enumeration attempt is visible even though the guessed ids belong to nothing.
+6. **Defense in depth.** Parameterized queries only (values travel separately from the SQL text, so input can never become SQL); Postgres row-level security (the database itself filters rows by organisation) on all three tenant-owned tables as a backstop; per-user rate limiting; and an alert on bursts of 403s, because a Basic user probing Enterprise endpoints is a detection event, not just a denial.
 
 The end state: a malicious Basic user with curl and a valid token can obtain no data beyond what an honest Basic user sees. The only extra things they collect are 403 responses and an audit trail.
 

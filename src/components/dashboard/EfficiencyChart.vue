@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
-import { scoreBand } from '@/config/bands'
+import { byScoreDesc, scoreBand } from '@/config/bands'
 import { chartColors, chartFonts, prefersReducedMotion } from '@/config/chartTheme'
 import '@/config/echarts'
 import { useMediaQuery } from '@/composables/useMediaQuery'
@@ -15,7 +15,7 @@ const isNarrow = useMediaQuery('(max-width: 640px)')
 // Ranked colors: the strongest performer gets the deepest teal
 const RANK_COLORS = [chartColors.teal900, chartColors.teal500, chartColors.teal300]
 
-const ranked = computed(() => [...props.products].sort((a, b) => b.score - a.score))
+const ranked = computed(() => byScoreDesc(props.products))
 
 const chartLabel = computed(
   () =>
@@ -33,6 +33,17 @@ const xBounds = computed(() => {
   return {
     min: Math.floor((Math.min(...days) - 0.1) * 2) / 2,
     max: Math.ceil((Math.max(...days) + 0.1) * 2) / 2,
+  }
+})
+
+// The score axis is zoomed rather than starting at zero, because this
+// chart is about relative position. It is still derived from the data:
+// a fixed 50 floor would silently hide any model scoring below it.
+const yBounds = computed(() => {
+  const scores = props.products.map((p) => p.score)
+  return {
+    min: Math.max(0, Math.floor((Math.min(...scores) - 5) / 10) * 10),
+    max: Math.min(100, Math.ceil((Math.max(...scores) + 5) / 10) * 10),
   }
 })
 
@@ -56,8 +67,8 @@ const option = computed(() => ({
   },
   yAxis: {
     type: 'value',
-    min: 50,
-    max: 100,
+    min: yBounds.value.min,
+    max: yBounds.value.max,
     interval: 10,
     axisLabel: { color: chartColors.faint, fontFamily: chartFonts.mono, fontSize: 11.5 },
     splitLine: { lineStyle: { color: chartColors.lineSoft } },

@@ -73,7 +73,10 @@ CREATE TABLE test_results (
   score      numeric(5,2) NOT NULL CHECK (score BETWEEN 0 AND 100),
   ttr_days   numeric(5,2),                -- time to result, in days
   tested_at  date NOT NULL,
-  metrics    jsonb NOT NULL DEFAULT '{}'
+  metrics    jsonb NOT NULL DEFAULT '{}',
+  -- Without this, two results could share a product and a date and
+  -- "the latest score" would have no single answer.
+  UNIQUE (product_id, tested_at)
 );
 
 -- Reports and audit ------------------------------------------------------
@@ -92,7 +95,14 @@ CREATE TABLE download_log (
   -- user: the audit row must record the org at request time, even if
   -- the user later moves to another organisation.
   org_id       uuid NOT NULL REFERENCES organisations(id),
-  artifact_id  uuid NOT NULL REFERENCES report_artifacts(id),
+  -- The identifier the caller actually asked for, recorded as plain
+  -- text. Someone probing for reports guesses ids that do not exist, so
+  -- this column is what makes an enumeration attempt visible.
+  requested_key text NOT NULL,
+  -- Null when the requested key matched no artifact. A foreign key
+  -- alone could not store that row, which would mean the most
+  -- interesting denials never got logged.
+  artifact_id  uuid REFERENCES report_artifacts(id),
   requested_at timestamptz NOT NULL DEFAULT now(),
   allowed      boolean NOT NULL           -- log denials too: they are the security signal
 );
@@ -110,8 +120,11 @@ CREATE INDEX ON products (category_id);
 -- Per-tenant usage and abuse queries, newest first.
 CREATE INDEX ON download_log (org_id, requested_at DESC);
 
--- "Who downloaded this report": Postgres does not auto-index foreign keys.
-CREATE INDEX ON download_log (artifact_id);
+-- Postgres does not auto-index foreign keys, so the ones with real read
+-- paths get an index by hand.
+CREATE INDEX ON download_log (artifact_id);  -- who downloaded this report
+CREATE INDEX ON users (org_id);              -- list an organisation's members
+CREATE INDEX ON report_artifacts (test_result_id);
 
 -- Note: users(email) and the subscription exclusion constraint already
 -- create their own indexes. A partial index keyed on today's date is not
@@ -125,14 +138,27 @@ CREATE INDEX ON download_log (artifact_id);
 -- RLS deliberately does NOT apply to the shared catalogue, because the
 -- catalogue is shared by design; entitlements control it per request.
 
-ALTER TABLE download_log ENABLE ROW LEVEL SECURITY;
+-- Applied to all three tenant-owned tables, so no tenant data sits
+-- outside the backstop.
+ALTER TABLE users            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subscriptions    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE download_log     ENABLE ROW LEVEL SECURITY;
+
 -- Owners skip RLS by default, and demo apps often connect as the role
 -- that ran the migrations. FORCE applies the policy to the owner too;
 -- the app should still connect as a plain role that owns nothing.
-ALTER TABLE download_log FORCE ROW LEVEL SECURITY;
+ALTER TABLE users            FORCE ROW LEVEL SECURITY;
+ALTER TABLE subscriptions    FORCE ROW LEVEL SECURITY;
+ALTER TABLE download_log     FORCE ROW LEVEL SECURITY;
 
 -- current_setting(..., true) returns NULL instead of raising when the
 -- setting is absent, and NULLIF guards the empty string. A request that
 -- forgot SET LOCAL then sees zero rows: it fails closed and quiet.
+CREATE POLICY org_isolation ON users
+  USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
+
+CREATE POLICY org_isolation ON subscriptions
+  USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
+
 CREATE POLICY org_isolation ON download_log
   USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

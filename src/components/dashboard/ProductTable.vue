@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { byScoreDesc } from '@/config/bands'
 import { useTier } from '@/composables/useTier'
 import type { Product } from '@/types/models'
 import ScoreBadge from './ScoreBadge.vue'
@@ -15,7 +16,7 @@ const emit = defineEmits<{ download: [product: Product]; downloadCategory: [] }>
 const { can } = useTier()
 
 // Highest score first, same order as the chart
-const sorted = computed(() => [...props.products].sort((a, b) => b.score - a.score))
+const sorted = computed(() => byScoreDesc(props.products))
 const bestId = computed(() => sorted.value[0]?.id)
 </script>
 
@@ -25,6 +26,7 @@ const bestId = computed(() => sorted.value[0]?.id)
     :note="`Showing top ${products.length} of ${totalTested} tested products`"
   >
     <template #actions>
+      <!-- Enterprise: the active report action -->
       <button
         v-if="can('download:reports')"
         type="button"
@@ -40,8 +42,37 @@ const bestId = computed(() => sorted.value[0]?.id)
             stroke-linejoin="round"
           />
         </svg>
-        Download category report
+        Download PDF Report
       </button>
+
+      <!-- Premium: the same action, present but disabled, so the plan
+           difference reads as locked versus unlocked rather than the
+           control appearing out of nowhere on the higher plan -->
+      <span v-else class="tip-wrap">
+        <button
+          type="button"
+          class="download-all locked"
+          aria-disabled="true"
+          aria-describedby="dl-tip-category"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Download PDF Report
+        </button>
+        <span id="dl-tip-category" role="tooltip" class="tip">
+          Full PDF test reports are available on the Enterprise plan.
+        </span>
+      </span>
     </template>
 
     <div class="table-scroll">
@@ -132,6 +163,20 @@ const bestId = computed(() => sorted.value[0]?.id)
 }
 .download-all:active {
   transform: translateY(1px);
+}
+/* Locked variant: still visible and still focusable, so the tooltip
+   can explain the gate, but it carries no click handler */
+.download-all.locked {
+  background: transparent;
+  color: var(--ink-faint);
+  border: 1px solid var(--line);
+  cursor: not-allowed;
+}
+.download-all.locked:hover {
+  background: transparent;
+}
+.download-all.locked:active {
+  transform: none;
 }
 
 /* Scrolling clips the focus tooltips, so the table only becomes

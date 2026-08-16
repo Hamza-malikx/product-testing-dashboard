@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { SCORE_BANDS } from '@/config/bands'
 import KpiRow from '@/components/dashboard/KpiRow.vue'
 import TierSelect from '@/components/gating/TierSelect.vue'
 import { useTier } from '@/composables/useTier'
@@ -40,37 +41,53 @@ function showToast(message: string) {
   toastTimer = setTimeout(() => (toast.value = ''), 2500)
 }
 
-// The PDF code is loaded only here, on click. Locked plans never
-// even download it (the gate extends to the code bundle itself).
-// The report draws its own vector chart, so it never depends on
-// how the on-screen chart looks at the moment of download.
-async function downloadCategoryReport() {
-  // The button only renders for Enterprise, but the handler checks the
-  // capability too. The UI is never the only thing standing in the way.
+// One path for both downloads: check the capability, say something,
+// load the report code, build the file.
+//
+// The capability guard runs even though the buttons are already gated,
+// because the UI must never be the only thing standing in the way. The
+// PDF code is imported here rather than at the top of the file, so a
+// plan that cannot download never fetches that chunk at all.
+async function runReport(message: string, build: () => Promise<void>) {
   if (!can('download:reports')) return
-  if (!view.value?.products) return
-  showToast('Preparing category report...')
-  const { generateReport } = await import('@/services/reportPdf')
-  await generateReport({
-    category: view.value.category,
-    stats: view.value.aggregate_stats,
-    products: view.value.products,
-    totalTested: view.value.aggregate_stats.total_tested,
-    withChart: true,
-    fileName: `${view.value.category.toLowerCase()}-category-report`,
+  showToast(message)
+  try {
+    await build()
+  } catch {
+    // The chunk failed to load, or the document failed to build. Say so
+    // rather than leaving the toast promising a file that never arrives.
+    showToast('Could not build the report. Please try again.')
+  }
+}
+
+async function downloadCategoryReport() {
+  const data = view.value
+  const products = data?.products
+  if (!data || !products) return
+  await runReport('Preparing category report...', async () => {
+    const { generateReport } = await import('@/services/reportPdf')
+    await generateReport({
+      category: data.category,
+      stats: data.aggregate_stats,
+      products,
+      totalTested: data.aggregate_stats.total_tested,
+      withChart: true,
+      fileName: `${data.category.toLowerCase()}-category-report`,
+    })
   })
 }
 
 async function onRowDownload(product: Product) {
-  if (!can('download:reports')) return
-  if (!view.value) return
-  showToast(`Preparing ${product.download_id}...`)
-  const { generateReport } = await import('@/services/reportPdf')
-  await generateReport({
-    category: view.value.category,
-    products: [product],
-    totalTested: view.value.aggregate_stats.total_tested,
-    fileName: product.download_id,
+  const data = view.value
+  if (!data) return
+  await runReport(`Preparing ${product.download_id}...`, async () => {
+    const { generateReport } = await import('@/services/reportPdf')
+    await generateReport({
+      category: data.category,
+      products: [product],
+      totalTested: data.aggregate_stats.total_tested,
+      fileName: product.download_id,
+    })
   })
 }
 </script>
@@ -120,10 +137,11 @@ async function onRowDownload(product: Product) {
               />
             </template>
           </FeatureGate>
-          <!-- The table states its own capability rather than inheriting
-               the chart gate. It has no locked state of its own: the
-               whole model-level area sits behind one frosted panel, so a
-               second overlay here would just repeat the same message. -->
+          <!-- The table sits inside the chart gate, so Basic never
+               reaches it, and it also states its own capability so the
+               requirement is visible here rather than inferred. One
+               frosted panel covers the whole model-level area, which is
+               why the table has no separate locked state. -->
           <ProductTable
             v-if="can('view:products') && view.products"
             :products="view.products"
@@ -142,7 +160,7 @@ async function onRowDownload(product: Product) {
           <template #prompt>
             <UpgradePrompt
               title="Model-level results are on Premium"
-              body="Your plan includes category averages. Premium adds interactive score and time-to-result comparisons for all 15 tested models."
+              :body="`Your plan includes category averages. Premium adds interactive score and time-to-result comparisons for all ${view.aggregate_stats.total_tested} tested models.`"
               action-label="Preview Premium"
               @action="setTier('premium')"
             />
@@ -161,18 +179,9 @@ async function onRowDownload(product: Product) {
     <footer class="colophon">
       <div class="scale">
         <span class="microlabel">Rating scale</span>
-        <span class="scale-item"
-          ><span class="swatch excellent" aria-hidden="true"></span>Excellent 85-100</span
-        >
-        <span class="scale-item"
-          ><span class="swatch good" aria-hidden="true"></span>Good 70-84</span
-        >
-        <span class="scale-item"
-          ><span class="swatch fair" aria-hidden="true"></span>Fair 55-69</span
-        >
-        <span class="scale-item"
-          ><span class="swatch poor" aria-hidden="true"></span>Poor below 55</span
-        >
+        <span v-for="band in SCORE_BANDS" :key="band.css" class="scale-item">
+          <span class="swatch" :class="band.css" aria-hidden="true"></span>{{ band.range }}
+        </span>
       </div>
       <p class="colophon-note">Illustrative sample data · technical demonstration</p>
     </footer>

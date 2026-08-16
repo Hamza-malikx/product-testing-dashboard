@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -33,8 +33,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint and format check
+        run: pnpm check
+
       - name: Run unit tests
-        run: pnpm exec vitest run
+        run: pnpm test:unit --run
 
       - name: Build (includes the TypeScript check)
         run: pnpm build

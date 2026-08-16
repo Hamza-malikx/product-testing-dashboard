@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf'
 import autoTable, { type CellHookData } from 'jspdf-autotable'
-import { scoreBand } from '@/config/bands'
+import { byScoreDesc, scoreBand, SCORE_BANDS } from '@/config/bands'
 import type { AggregateStats, Product } from '@/types/models'
 
 // Colors kept in sync with src/assets/main.css
@@ -159,7 +159,7 @@ function drawScoreChart(
   const barH = 13
   const gap = 11
   const topPad = 15 // room for the average label above the plot
-  const sorted = [...products].sort((a, b) => b.score - a.score)
+  const sorted = byScoreDesc(products)
   const plotH = sorted.length * (barH + gap) - gap
   const baseY = y + topPad
 
@@ -217,8 +217,10 @@ function drawEfficiencyChart(
   const days = products.map((p) => p.ttr_days)
   const minX = Math.floor((Math.min(...days) - 0.1) * 2) / 2
   const maxX = Math.ceil((Math.max(...days) + 0.1) * 2) / 2
-  const yMin = 50
-  const yMax = 100
+  // Derived like the app's chart, so a low scorer is never clipped away
+  const scores = products.map((p) => p.score)
+  const yMin = Math.max(0, Math.floor((Math.min(...scores) - 5) / 10) * 10)
+  const yMax = Math.min(100, Math.ceil((Math.max(...scores) + 5) / 10) * 10)
   const px = (d: number) => plotX + ((d - minX) / (maxX - minX)) * plotW
   const py = (s: number) => baseY + plotH - ((s - yMin) / (yMax - yMin)) * plotH
 
@@ -265,14 +267,12 @@ function drawColophon(doc: jsPDF, pageWidth: number, pageHeight: number, margin:
   doc.text('RATING SCALE', margin, y, { charSpace: 0.5 })
   doc.setFont('helvetica', 'normal')
 
-  const items: Array<[string, string]> = [
-    [BAND_COLORS.excellent.bg, 'Excellent 85-100'],
-    [BAND_COLORS.good.bg, 'Good 70-84'],
-    [BAND_COLORS.fair.bg, 'Fair 55-69'],
-    [BAND_COLORS.poor.bg, 'Poor below 55'],
-  ]
+  // Read from the same band list the app uses, so the printed scale can
+  // never disagree with the scale that awarded the scores
   let ix = margin + 68
-  items.forEach(([color, label]) => {
+  SCORE_BANDS.forEach((band) => {
+    const color = BAND_COLORS[band.css].bg
+    const label = band.range
     doc.setFillColor(color)
     // plain squares: tiny rounded rects can misrender in some viewers
     doc.rect(ix, y - 5.5, 6, 6, 'F')
@@ -369,7 +369,7 @@ export async function generateReport(opts: ReportOptions): Promise<void> {
   }
 
   // Product table, highest score first, styled like the app's table
-  const rows = [...opts.products].sort((a, b) => b.score - a.score)
+  const rows = byScoreDesc(opts.products)
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
