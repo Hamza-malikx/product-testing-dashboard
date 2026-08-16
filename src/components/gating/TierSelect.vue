@@ -89,8 +89,11 @@ const { tier } = useTier()
   border-radius: var(--radius);
   padding: 7px 12px;
 }
+/* The whole field shows one focus ring, so the select inside it
+   does not draw a second box of its own */
 .plan-field:focus-within {
   border-color: var(--teal-500);
+  box-shadow: 0 0 0 3px rgba(21, 156, 134, 0.4);
 }
 .plan-dot {
   width: 6px;
@@ -111,9 +114,7 @@ const { tier } = useTier()
 .sim-select option {
   color: var(--ink); /* the opened list is drawn by the OS on white */
 }
-/* The global teal ring is invisible on this dark bar */
 .sim-select:focus-visible {
-  outline: 2px solid #edefec;
-  outline-offset: 3px;
+  outline: none; /* the field wrapper carries the focus ring */
 }
 </style>
