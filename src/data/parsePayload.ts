@@ -52,7 +52,6 @@ function parseProduct(value: unknown, index: number): Product {
   }
 }
 
-
 /**
  * Validates unknown data and returns a typed payload.
  * In production this data would arrive from an API, so we

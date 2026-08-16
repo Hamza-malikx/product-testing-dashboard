@@ -4,17 +4,22 @@ A single-page dashboard that shows product test results for one category (dishwa
 
 **Live demo:** https://hamza-malikx.github.io/product-testing-dashboard/
 
-![Dashboard on the Enterprise plan](docs/screenshot.png)
+The same page on each plan. Basic sees category averages with a locked preview, Premium unlocks model-level results, Enterprise adds the efficiency view and working PDF reports.
+
+| Basic                                    | Premium                                      | Enterprise                                         |
+| ---------------------------------------- | -------------------------------------------- | -------------------------------------------------- |
+| ![Basic plan](docs/screenshot-basic.png) | ![Premium plan](docs/screenshot-premium.png) | ![Enterprise plan](docs/screenshot-enterprise.png) |
 
 ## Quickstart
 
-Needs Node 22.18 or newer (the exact supported range is pinned in the `engines` field of `package.json`). pnpm is the package manager used here (also pinned there), but npm works the same way.
+Needs Node 22.18 or newer, or Node 24.12 or newer. The exact range is `^22.18.0 || >=24.12.0`, pinned in the `engines` field of `package.json`, so Node 23 and early Node 24 builds are excluded. pnpm is the package manager used here (also pinned there), and npm works too.
 
 ```bash
 pnpm install
-pnpm dev          # dev server on http://localhost:5173
-pnpm test:unit    # unit tests (Vitest)
-pnpm build        # type check + production build
+pnpm dev                 # dev server on http://localhost:5173
+pnpm test:unit --run     # unit tests once (omit --run for watch mode)
+pnpm build               # type check + production build
+pnpm lint                # oxlint and eslint
 ```
 
 ## Part A: how the frontend works
@@ -23,11 +28,11 @@ pnpm build        # type check + production build
 
 Every plan maps to a set of named capabilities in [`src/config/tiers.ts`](src/config/tiers.ts):
 
-| Plan       | Capabilities                                                          |
-| ---------- | --------------------------------------------------------------------- |
-| Basic      | `view:aggregates`                                                      |
-| Premium    | + `view:charts`, `view:products`                                       |
-| Enterprise | + `view:advanced-charts`, `download:reports`                           |
+| Plan       | Capabilities                                 |
+| ---------- | -------------------------------------------- |
+| Basic      | `view:aggregates`                            |
+| Premium    | + `view:charts`, `view:products`             |
+| Enterprise | + `view:advanced-charts`, `download:reports` |
 
 Components never check the plan name. They ask a question, like `can('download:reports')`. Moving a feature between plans is a one-line change in one file, and the test suite asserts what each plan must **not** be able to do. This mirrors how a server-side policy table would drive authorization in the real product (Part B, question 2).
 
@@ -45,13 +50,32 @@ The payload says 15 models were tested but lists only 3, and the average of the 
 
 Charts use Apache ECharts with per-module imports (`echarts/core`), so the bundle only carries the pieces in use. Premium unlocks the score chart; Enterprise adds the score vs time-to-result view.
 
-Enterprise's "Download category report (PDF)" builds a real PDF in the browser (jsPDF), with both charts drawn as native vector graphics in the same design system as the app. The PDF code is split into its own chunk and loaded only on click, so other plans never even download it. In production this button would call an API that checks the caller's plan and returns a short-lived signed link (question 2).
+Enterprise's "Download category report" builds a real PDF in the browser (jsPDF), with both charts drawn as native vector graphics in the same design system as the app. The PDF code is split into its own chunk and loaded only on click, so other plans never even download it. In production this button would call an API that checks the caller's plan and returns a short-lived signed link (question 2).
+
+### Design and accessibility
+
+The visual language is a testing-lab report: a teal brand ramp, Space Grotesk for display, Inter for text, and JetBrains Mono for codes, report references and chart readouts, so measured values look like lab data. Verdict chips always print the score or the band word, so color is never the only signal.
+
+Two charting choices worth naming, because they are the kind of thing that quietly misleads people when done carelessly:
+
+- **The bar chart starts at zero.** Scores are compared against each other, and a truncated baseline would exaggerate small gaps.
+- **The scatter does not.** It zooms to the data range (padded to half-day steps) because the question there is relative position, not magnitude, and a zero baseline would squash all three models into one corner.
+
+Accessibility is built in rather than bolted on:
+
+- Locked previews are `inert` and `aria-hidden`, so keyboard and screen reader users never reach decoy content.
+- Each chart carries `role="img"` and an `aria-label` that reads out the actual figures, and the product table is the full non-visual equivalent.
+- Plan changes are announced through an `aria-live` region.
+- Locked download buttons use `aria-disabled` instead of `disabled`, so they stay keyboard reachable, and their tooltip opens on focus as well as hover.
+- Focus is always visible: a `:focus-visible` outline in the brand teal on light surfaces, and a light ring on the dark navigation bar, where teal would be too low-contrast to see.
+- Reduced motion is respected twice: in CSS, and in the chart options, because ECharts animates in JavaScript where a CSS rule cannot reach it.
+- Body text and labels meet WCAG AA contrast. The label token was darkened until it cleared 4.5:1 on every surface it lands on: white cards, the page background, and the faint ruled lines drawn over that background.
 
 ### Deliberate omissions
 
 - **No Pinia and no router.** One page and one piece of shared state; a composable holds it. A store earns its place when state grows (real sessions, several pages, server cache).
 - **No dark mode.** Cut for scope. The palette lives as CSS custom properties in `src/assets/main.css`, which is where a dark theme would start.
-- **Tests cover permission and data logic only.** The one page has no routing or async flows, so component tests would mostly be testing Vue itself.
+- **Tests cover the rules, not the pixels.** Unit tests assert the permission map and the data filter; render tests mount the page as each plan and assert what must _not_ appear (no product rows or download controls for Basic, locked buttons for Premium). Charts are stubbed there, since asserting canvas drawing would test ECharts rather than this code.
 
 ## Part B: system design answers
 
@@ -72,6 +96,20 @@ erDiagram
   report_artifacts ||--o{ download_log : "downloaded via"
 ```
 
+Keys at a glance (full column definitions are in [`schema.sql`](schema.sql)):
+
+| Table              | Primary key     | Foreign keys                                                                                 |
+| ------------------ | --------------- | -------------------------------------------------------------------------------------------- |
+| `organisations`    | `id` (uuid)     | none                                                                                         |
+| `tiers`            | `id` (smallint) | none                                                                                         |
+| `subscriptions`    | `id` (bigint)   | `org_id` → `organisations.id`, `tier_id` → `tiers.id`                                        |
+| `users`            | `id` (uuid)     | `org_id` → `organisations.id`                                                                |
+| `categories`       | `id` (integer)  | none                                                                                         |
+| `products`         | `id` (bigint)   | `category_id` → `categories.id`                                                              |
+| `test_results`     | `id` (bigint)   | `product_id` → `products.id`                                                                 |
+| `report_artifacts` | `id` (uuid)     | `test_result_id` → `test_results.id`, `min_tier_id` → `tiers.id`                             |
+| `download_log`     | `id` (bigint)   | `user_id` → `users.id`, `org_id` → `organisations.id`, `artifact_id` → `report_artifacts.id` |
+
 Key decisions, and why:
 
 - **Plans are a lookup table, not an enum.** Plans change: prices, grandfathered deals, per-plan flags. A `tiers` table with a `rank` column supports "premium or higher" checks and new plans without schema migrations.
@@ -79,7 +117,7 @@ Key decisions, and why:
 - **Metrics are a hybrid.** The two values every category shares (`score`, `ttr_days`) are typed, indexed columns. Protocol-specific measurements go into a JSONB column (JSON stored in a binary form the database can index), because each product category tests different things. When a JSON metric becomes something we filter or sort by, it is promoted to a real column.
 - **Report files are private objects.** `report_artifacts` stores storage keys (never public URLs) plus the minimum plan required. `download_log` records every request, including denied ones, because denials are the interesting security signal.
 
-Indexes that matter: `test_results (product_id, tested_at) INCLUDE (score, ttr_days)` lets the latest-scores lookup run as an index-only scan once the table's visibility map is current; `products (category_id)` because the dashboard is category-scoped; `download_log (org_id, requested_at DESC)` for usage and abuse queries. The full SQL schema, including the exclusion constraint and a row-level security example, is in [`schema.sql`](schema.sql).
+Indexes that matter: `test_results (product_id, tested_at DESC) INCLUDE (score, ttr_days)` lets the latest-scores lookup run as an index-only scan once the table's visibility map is current; `products (category_id)` because the dashboard is category-scoped; `download_log (org_id, requested_at DESC)` for usage and abuse queries. The full SQL schema, including the exclusion constraint and a row-level security example, is in [`schema.sql`](schema.sql).
 
 ### 2. API security: a malicious Basic user cannot reach Enterprise data
 
@@ -105,5 +143,7 @@ The two classes of defect I actively hunt for in AI-generated code:
 Also on the watch list, one line each: hallucinated or stale dependencies (verify a package exists and is maintained before installing it, keep a lockfile and audit in CI), hardcoded secrets (gitleaks in pre-commit), permissive CORS defaults.
 
 ## Trade-offs and next steps
+
+Two things in the build output worth explaining rather than hiding. The main bundle is around 620 kB raw and 215 kB gzipped, and nearly all of it is ECharts; tree-shaking is working (only the bar and scatter charts are registered in `src/config/echarts.ts`), so this is the library's floor for two chart types. And jsPDF ships lazy chunks for `html2canvas` and DOMPurify that this app never fetches, because the report is drawn as vectors and never touches jsPDF's HTML path.
 
 With more time this becomes: a real API with the entitlement middleware from question 2 and server-computed aggregates; login and organisation-level subscriptions; report downloads via signed URLs with audit logging; and usage telemetry on the locked-feature prompts, because knowing which gates get hit informs pricing. The client would then fetch tier-shaped responses instead of parsing a static payload, and the `selectDataForTier` seam is exactly where that swap happens.

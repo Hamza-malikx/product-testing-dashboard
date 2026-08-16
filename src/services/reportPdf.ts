@@ -7,7 +7,7 @@ import type { AggregateStats, Product } from '@/types/models'
 const INK = '#10161a'
 const MUTED = '#5b6b70'
 const ACCENT = '#0b5d50'
-const NAVY = '#0e7c6b' // chart bars, the mid teal
+const CHART_TEAL = '#0e7c6b' // chart bars
 const HAIRLINE = '#e2e6e2'
 const PAPER_WHITE = '#ffffff'
 
@@ -64,7 +64,13 @@ function drawScoreChip(
 }
 
 /** The app's KPI strip: three cells, hero average score, hairline dividers */
-function drawKpiStrip(doc: jsPDF, stats: AggregateStats, x: number, y: number, width: number): number {
+function drawKpiStrip(
+  doc: jsPDF,
+  stats: AggregateStats,
+  x: number,
+  y: number,
+  width: number,
+): number {
   const col1 = 0.4 * width
   const col2 = 0.3 * width
   const stripH = 52
@@ -111,7 +117,15 @@ function drawKpiStrip(doc: jsPDF, stats: AggregateStats, x: number, y: number, w
 }
 
 /** A DashPanel look-alike: hairline rounded frame with title and optional note */
-function panelFrame(doc: jsPDF, x: number, y: number, w: number, h: number, title: string, note?: string): number {
+function panelFrame(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  title: string,
+  note?: string,
+): number {
   doc.setDrawColor(HAIRLINE)
   doc.setLineWidth(0.75)
   doc.roundedRect(x, y, w, h, 4, 4, 'S')
@@ -165,7 +179,7 @@ function drawScoreChart(
     doc.setFontSize(8.5)
     doc.setTextColor(INK)
     doc.text(`${p.brand} ${p.model}`, plotX - 8, barY + barH / 2 + 3, { align: 'right' })
-    doc.setFillColor(NAVY)
+    doc.setFillColor(CHART_TEAL)
     doc.rect(plotX, barY, barW, barH, 'F')
     doc.setFont('helvetica', 'bold')
     doc.text(String(p.score), plotX + barW + 5, barY + barH / 2 + 3)
@@ -186,7 +200,13 @@ function drawScoreChart(
 }
 
 /** Score vs time-to-result scatter, same padded half-day axis rule as the app */
-function drawEfficiencyChart(doc: jsPDF, products: Product[], x: number, y: number, width: number): number {
+function drawEfficiencyChart(
+  doc: jsPDF,
+  products: Product[],
+  x: number,
+  y: number,
+  width: number,
+): number {
   const labelGutter = 38
   const plotX = x + labelGutter
   const plotW = width - labelGutter - 10
@@ -220,7 +240,7 @@ function drawEfficiencyChart(doc: jsPDF, products: Product[], x: number, y: numb
   }
 
   products.forEach((p) => {
-    doc.setFillColor(NAVY)
+    doc.setFillColor(CHART_TEAL)
     doc.circle(px(p.ttr_days), py(p.score), 3.5, 'F')
     doc.setTextColor(INK)
     doc.text(`${p.brand} ${p.model}`, px(p.ttr_days), py(p.score) - 7, { align: 'center' })
@@ -280,15 +300,19 @@ export async function generateReport(opts: ReportOptions): Promise<void> {
   const contentW = pageWidth - margin * 2
   let y = 54
 
-  // Masthead: eyebrow, title, petrol rule, meta line
+  // A single-product report is titled after that model, not the
+  // category, so the document never claims to be more than it is
+  const single = !opts.stats && opts.products.length === 1 ? opts.products[0] : undefined
+
+  // Masthead: eyebrow, title, accent rule, meta line
   doc.setTextColor(MUTED)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(8)
-  doc.text('CATEGORY TEST REPORT', margin, y, { charSpace: 1 })
+  doc.text(single ? 'MODEL TEST REPORT' : 'CATEGORY TEST REPORT', margin, y, { charSpace: 1 })
   y += 24
   doc.setTextColor(INK)
   doc.setFontSize(26)
-  doc.text(opts.category, margin, y)
+  doc.text(single ? `${single.brand} ${single.model}` : opts.category, margin, y)
   y += 10
   doc.setDrawColor(ACCENT)
   doc.setLineWidth(2.2)
@@ -302,7 +326,13 @@ export async function generateReport(opts: ReportOptions): Promise<void> {
     month: 'long',
     year: 'numeric',
   })
-  doc.text(`Generated ${generated} · Independent lab data`, margin, y)
+  doc.text(
+    single
+      ? `${opts.category} · Report ${single.download_id} · Generated ${generated}`
+      : `Generated ${generated} · Independent lab data`,
+    margin,
+    y,
+  )
   y += 20
 
   // KPI strip (category reports)
@@ -314,7 +344,14 @@ export async function generateReport(opts: ReportOptions): Promise<void> {
   if (opts.withChart && opts.stats) {
     const barPanelH = 28 + 15 + (opts.products.length * 24 - 11) + 20 + 6
     let contentY = panelFrame(doc, margin, y, contentW, barPanelH, 'Performance by model')
-    drawScoreChart(doc, opts.products, opts.stats.avg_score, margin + 14, contentY - 6, contentW - 28)
+    drawScoreChart(
+      doc,
+      opts.products,
+      opts.stats.avg_score,
+      margin + 14,
+      contentY - 6,
+      contentW - 28,
+    )
     y += barPanelH + 14
 
     const scatterPanelH = 28 + 13 + 110 + 30 + 8
@@ -401,7 +438,9 @@ export async function generateReport(opts: ReportOptions): Promise<void> {
   doc.setFontSize(8.5)
   doc.setTextColor(MUTED)
   doc.text(
-    `Showing top ${opts.products.length} of ${opts.totalTested} tested products.`,
+    single
+      ? `One model from ${opts.totalTested} tested in this category.`
+      : `Showing top ${opts.products.length} of ${opts.totalTested} tested products.`,
     margin,
     afterTable,
   )

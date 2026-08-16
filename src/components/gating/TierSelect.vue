@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { useTier } from '@/composables/useTier'
-import { TIERS, TIER_LABELS } from '@/config/tiers'
+import { TIERS, TIER_LABELS, type Tier } from '@/config/tiers'
 
-const { tier } = useTier()
+const { tier, setTier } = useTier()
+
+// The plan ref is read-only, so changes go through setTier
+function onChange(event: Event) {
+  setTier((event.target as HTMLSelectElement).value as Tier)
+}
 </script>
 
 <template>
@@ -25,7 +30,7 @@ const { tier } = useTier()
       <label class="sim-label" for="tier-select">Simulating:</label>
       <span class="plan-field">
         <span class="plan-dot" aria-hidden="true"></span>
-        <select id="tier-select" v-model="tier" class="sim-select">
+        <select id="tier-select" :value="tier" class="sim-select" @change="onChange">
           <option v-for="t in TIERS" :key="t" :value="t">{{ TIER_LABELS[t] }} plan</option>
         </select>
       </span>
@@ -89,11 +94,12 @@ const { tier } = useTier()
   border-radius: var(--radius);
   padding: 7px 12px;
 }
-/* The whole field shows one focus ring, so the select inside it
-   does not draw a second box of its own */
+/* One focus ring for the whole field, so the select inside does not
+   draw a second box. It is light, not brand teal: on this near-black
+   bar a teal ring is too low-contrast to be a reliable indicator. */
 .plan-field:focus-within {
-  border-color: var(--teal-500);
-  box-shadow: 0 0 0 3px rgba(21, 156, 134, 0.4);
+  border-color: #edefec;
+  box-shadow: 0 0 0 3px rgba(237, 239, 236, 0.45);
 }
 .plan-dot {
   width: 6px;

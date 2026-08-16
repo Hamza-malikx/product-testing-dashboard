@@ -29,9 +29,7 @@ const gaugeOffset = computed(() => GAUGE_LENGTH * (1 - props.stats.avg_score / 1
       </span>
       <div>
         <p class="stat-label microlabel">Average score</p>
-        <p class="stat-value tnum">
-          {{ stats.avg_score }}<span class="unit">/100</span>
-        </p>
+        <p class="stat-value tnum">{{ stats.avg_score }}<span class="unit">/100</span></p>
         <ScoreBadge :score="stats.avg_score" variant="word" />
       </div>
     </div>
@@ -39,16 +37,14 @@ const gaugeOffset = computed(() => GAUGE_LENGTH * (1 - props.stats.avg_score / 1
     <div class="stat">
       <div>
         <p class="stat-label microlabel">Models tested</p>
-        <p class="stat-value mono tnum">{{ stats.total_tested }}</p>
+        <p class="stat-value tnum">{{ stats.total_tested }}</p>
       </div>
     </div>
 
     <div class="stat">
       <div>
         <p class="stat-label microlabel">Average time to result</p>
-        <p class="stat-value mono tnum">
-          {{ stats.avg_ttr_days }}<span class="unit">days</span>
-        </p>
+        <p class="stat-value tnum">{{ stats.avg_ttr_days }}<span class="unit">days</span></p>
       </div>
     </div>
   </section>

@@ -3,7 +3,7 @@
 export const chartColors = {
   ink: '#10161a',
   inkSoft: '#5b6b70',
-  faint: '#93a0a3',
+  faint: '#5e6c6f', // matches --ink-faint, AA-legible on every surface
   line: '#e2e6e2',
   lineSoft: '#edefeb',
   paper: '#ffffff',
@@ -41,4 +41,6 @@ export function barGradient(top = false) {
 // ECharts animates in JavaScript, so the CSS reduced-motion rule
 // cannot stop it. Charts read this flag instead.
 export const prefersReducedMotion =
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches

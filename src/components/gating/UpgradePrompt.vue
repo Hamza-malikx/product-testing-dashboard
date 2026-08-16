@@ -1,8 +1,10 @@
 <script setup lang="ts">
+// actionLabel is required, so a gate can never fall back to a generic
+// label that does not describe what the button actually does
 defineProps<{
   title: string
   body: string
-  actionLabel?: string
+  actionLabel: string
 }>()
 
 defineEmits<{ action: [] }>()
@@ -23,10 +25,12 @@ defineEmits<{ action: [] }>()
         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
       </svg>
     </span>
-    <h3>{{ title }}</h3>
+    <!-- h2 keeps the heading order intact: the card headings around it
+         are h2, and on Basic they sit inside the aria-hidden decoy -->
+    <h2>{{ title }}</h2>
     <p>{{ body }}</p>
     <button type="button" class="cta" @click="$emit('action')">
-      {{ actionLabel ?? 'Compare plans' }}
+      {{ actionLabel }}
     </button>
   </div>
 </template>
@@ -51,7 +55,7 @@ defineEmits<{ action: [] }>()
   background: linear-gradient(135deg, var(--teal-500), var(--teal-900));
   color: #fff;
 }
-h3 {
+h2 {
   font-size: 19px;
   font-weight: 600;
   letter-spacing: -0.01em;

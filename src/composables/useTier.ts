@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { readonly, ref } from 'vue'
 import { TIER_PERMISSIONS, type Capability, type Tier } from '@/config/tiers'
 
 // One shared tier for the whole app, held in module scope.
@@ -8,6 +8,8 @@ import { TIER_PERMISSIONS, type Capability, type Tier } from '@/config/tiers'
 const tier = ref<Tier>('basic')
 
 export function useTier() {
+  // The plan is exposed read-only, so setTier is the only way in.
+  // One controlled seam is what a real session store would give us.
   function setTier(value: Tier) {
     tier.value = value
   }
@@ -17,5 +19,5 @@ export function useTier() {
     return TIER_PERMISSIONS[tier.value].has(capability)
   }
 
-  return { tier, setTier, can }
+  return { tier: readonly(tier), setTier, can }
 }

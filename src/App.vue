@@ -45,6 +45,9 @@ function showToast(message: string) {
 // The report draws its own vector chart, so it never depends on
 // how the on-screen chart looks at the moment of download.
 async function downloadCategoryReport() {
+  // The button only renders for Enterprise, but the handler checks the
+  // capability too. The UI is never the only thing standing in the way.
+  if (!can('download:reports')) return
   if (!view.value?.products) return
   showToast('Preparing category report...')
   const { generateReport } = await import('@/services/reportPdf')
@@ -59,6 +62,7 @@ async function downloadCategoryReport() {
 }
 
 async function onRowDownload(product: Product) {
+  if (!can('download:reports')) return
   if (!view.value) return
   showToast(`Preparing ${product.download_id}...`)
   const { generateReport } = await import('@/services/reportPdf')
@@ -111,12 +115,17 @@ async function onRowDownload(product: Product) {
               <UpgradePrompt
                 title="The efficiency view is on Enterprise"
                 body="See which brands deliver high scores fast. Enterprise adds the score versus time-to-result view and full PDF test reports."
+                action-label="Preview Enterprise"
                 @action="setTier('enterprise')"
               />
             </template>
           </FeatureGate>
+          <!-- The table states its own capability rather than inheriting
+               the chart gate. It has no locked state of its own: the
+               whole model-level area sits behind one frosted panel, so a
+               second overlay here would just repeat the same message. -->
           <ProductTable
-            v-if="view.products"
+            v-if="can('view:products') && view.products"
             :products="view.products"
             :total-tested="view.aggregate_stats.total_tested"
             @download="onRowDownload"
@@ -134,6 +143,7 @@ async function onRowDownload(product: Product) {
             <UpgradePrompt
               title="Model-level results are on Premium"
               body="Your plan includes category averages. Premium adds interactive score and time-to-result comparisons for all 15 tested models."
+              action-label="Preview Premium"
               @action="setTier('premium')"
             />
           </template>

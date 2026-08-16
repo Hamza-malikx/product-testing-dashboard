@@ -122,10 +122,7 @@ const option = computed(() => ({
 
 <template>
   <!-- The "3 of 15" caption lives on the table only, to avoid repeating it -->
-  <DashPanel
-    title="Performance by model"
-    note="Composite score across cleaning, drying, noise and efficiency"
-  >
+  <DashPanel title="Performance by model" note="Composite score out of 100, higher is better">
     <!-- notMerge: each option update fully replaces the previous one,
          otherwise settings from the narrow layout stick after resizing -->
     <VChart
