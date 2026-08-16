@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
 import { scoreBand } from '@/config/bands'
-import { chartColors, chartFonts, prefersReducedMotion } from '@/config/chartTheme'
+import { barGradient, chartColors, chartFonts, prefersReducedMotion } from '@/config/chartTheme'
 import '@/config/echarts'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import type { Product } from '@/types/models'
@@ -31,15 +31,21 @@ const chartLabel = computed(
 
 const option = computed(() => ({
   animation: !prefersReducedMotion,
-  animationDuration: 400,
-  // Extra top room so the category-average label sits above the bars
-  grid: { left: isNarrow.value ? 0 : 8, right: isNarrow.value ? 16 : 56, top: 30, bottom: 8 },
+  animationDuration: 500,
+  grid: {
+    left: isNarrow.value ? 0 : 4,
+    right: 4,
+    top: 24, // room for the average label above the plot
+    bottom: 4,
+  },
   xAxis: {
     type: 'value',
     max: 100,
     interval: 25, // ticks at 0 / 25 / 50 / 75 / 100
-    axisLabel: { color: chartColors.muted, fontFamily: chartFonts.body, fontSize: 12 },
-    splitLine: { lineStyle: { color: chartColors.hairline } },
+    axisLine: { show: false },
+    axisTick: { show: false },
+    splitLine: { show: false }, // the reference keeps the plot clean
+    axisLabel: { color: chartColors.faint, fontFamily: chartFonts.mono, fontSize: 11 },
   },
   yAxis: {
     type: 'category',
@@ -51,18 +57,18 @@ const option = computed(() => ({
       show: !isNarrow.value,
       color: chartColors.ink,
       fontFamily: chartFonts.body,
+      fontWeight: 600,
       fontSize: 13,
+      margin: 16,
     },
   },
-  // Ink panel with light text: the same overlay language as the
-  // locked-button tooltip and the toast
   tooltip: {
     trigger: 'item',
     backgroundColor: chartColors.ink,
     borderWidth: 0,
-    borderRadius: 6,
+    borderRadius: 8,
     padding: [10, 14],
-    textStyle: { color: '#f4f6f8', fontFamily: chartFonts.body, fontSize: 13 },
+    textStyle: { color: '#edefec', fontFamily: chartFonts.body, fontSize: 13 },
     formatter: (params: { dataIndex: number }) => {
       const p = sorted.value[params.dataIndex]
       if (!p) return ''
@@ -80,40 +86,32 @@ const option = computed(() => ({
     {
       type: 'bar',
       cursor: 'default', // bars are not clickable, so no pointer cursor
-      data: sorted.value.map((p) => p.score),
-      barWidth: 28,
-      itemStyle: { color: chartColors.blue, borderRadius: [0, 4, 4, 0] },
-      emphasis: { itemStyle: { color: chartColors.blueHover } },
-      label: isNarrow.value
-        ? {
-            // name and value printed inside the bar: '{b}' is the
-            // category name, '{c}' is the value
-            show: true,
-            position: 'insideLeft',
-            formatter: '{b}   {c}',
-            color: '#fff',
-            fontFamily: chartFonts.body,
-            fontSize: 11,
-            fontWeight: 600,
-          }
-        : {
-            show: true,
-            position: 'right',
-            color: chartColors.ink,
-            fontFamily: chartFonts.body,
-            fontWeight: 600,
-          },
+      data: sorted.value.map((p, i) => ({
+        value: p.score,
+        // The leader gets the deepest gradient, so rank reads at a glance
+        itemStyle: { color: barGradient(i === 0), borderRadius: 6 },
+      })),
+      barWidth: 34,
+      // The value sits inside the bar, at its end, like the reference
+      label: {
+        show: true,
+        position: 'insideRight',
+        formatter: isNarrow.value ? '{b}   {c}' : '{c}',
+        color: '#fff',
+        fontFamily: chartFonts.mono,
+        fontWeight: 600,
+        fontSize: isNarrow.value ? 11 : 13,
+      },
       markLine: {
         symbol: 'none',
-        lineStyle: { type: 'dashed', color: chartColors.muted, width: 1 },
+        lineStyle: { type: 'dashed', color: chartColors.faint, width: 2 },
         label: {
-          // Shorter text on phones so it cannot run off the right edge
-          formatter: isNarrow.value ? `Avg ${props.categoryAverage}` : `Category avg ${props.categoryAverage}`,
-          position: 'start', // horizontal text at the top of the line, above the bars
-          distance: 6,
-          color: chartColors.muted,
-          fontFamily: chartFonts.body,
-          fontSize: 11,
+          formatter: `avg ${props.categoryAverage}`,
+          position: 'start',
+          distance: 8,
+          color: chartColors.inkSoft,
+          fontFamily: chartFonts.mono,
+          fontSize: 10.5,
         },
         data: [{ xAxis: props.categoryAverage }],
       },
@@ -124,7 +122,10 @@ const option = computed(() => ({
 
 <template>
   <!-- The "3 of 15" caption lives on the table only, to avoid repeating it -->
-  <DashPanel title="Performance by model">
+  <DashPanel
+    title="Performance by model"
+    note="Composite score across cleaning, drying, noise and efficiency"
+  >
     <!-- notMerge: each option update fully replaces the previous one,
          otherwise settings from the narrow layout stick after resizing -->
     <VChart
@@ -140,6 +141,6 @@ const option = computed(() => ({
 
 <style scoped>
 .chart {
-  height: 240px;
+  height: 230px;
 }
 </style>

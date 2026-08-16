@@ -4,59 +4,75 @@ import { scoreBand } from '@/config/bands'
 
 const props = defineProps<{
   score: number
-  /** also print the band word ("Good") next to the badge */
-  showLabel?: boolean
-  /** 'number' (default) puts the score in the chip; 'word' puts the band word in it */
-  variant?: 'number' | 'word'
+  /** 'pill' (default) shows the number in a mono chip; 'word' shows the band word */
+  variant?: 'pill' | 'word'
 }>()
 
 const band = computed(() => scoreBand(props.score))
 </script>
 
 <template>
-  <span class="wrap">
-    <span class="badge" :class="[band.css, variant === 'word' ? 'is-word' : 'tnum']">
-      {{ variant === 'word' ? band.word : score }}
-    </span>
-    <span v-if="showLabel && variant !== 'word'" class="word">{{ band.word }}</span>
+  <!-- A rounded chip with a dot, used beside the big stat numbers -->
+  <span v-if="variant === 'word'" class="rating-chip" :class="band.css">{{ band.word }}</span>
+
+  <!-- A square mono chip with the number, used in the table -->
+  <span v-else class="wrap">
+    <span class="score-pill mono tnum" :class="band.css">{{ score }}</span>
+    <span class="word">{{ band.word }}</span>
   </span>
 </template>
 
 <style scoped>
+.rating-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+}
+/* The dot inherits the text color, so one rule covers every band */
+.rating-chip::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
 .wrap {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
-.badge {
-  display: inline-block;
-  padding: 1px 7px;
-  border-radius: var(--radius-badge);
-  font-weight: 600;
-  font-size: 0.9em;
-  color: #fff;
-}
-.excellent {
-  background: var(--band-excellent);
-}
-.good {
-  background: var(--band-good);
-  color: var(--ink); /* light green needs dark text, like amber */
-}
-.fair {
-  background: var(--band-fair);
-  color: var(--ink); /* amber needs dark text to stay readable */
-}
-.poor {
-  background: var(--band-poor);
-}
-/* Word chips sit next to large numbers, so they keep their own size */
-.is-word {
-  font-size: 12px;
-  font-weight: 600;
+.score-pill {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 .word {
-  color: var(--muted);
-  font-size: 0.85em;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+/* Verdict bands. The chip always prints a number or a word,
+   so color is never the only signal. */
+.excellent {
+  background: var(--teal-900);
+  color: #fff;
+}
+.good {
+  background: var(--teal-100);
+  color: var(--teal-900);
+}
+.fair {
+  background: var(--amber-100);
+  color: #7a5308;
+}
+.poor {
+  background: var(--red-100);
+  color: #7c2a1d;
 }
 </style>

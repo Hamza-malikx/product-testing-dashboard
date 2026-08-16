@@ -12,10 +12,15 @@ const props = defineProps<{ products: Product[] }>()
 
 const isNarrow = useMediaQuery('(max-width: 640px)')
 
+// Ranked colors: the strongest performer gets the deepest teal
+const RANK_COLORS = [chartColors.teal900, chartColors.teal500, chartColors.teal300]
+
+const ranked = computed(() => [...props.products].sort((a, b) => b.score - a.score))
+
 const chartLabel = computed(
   () =>
     'Scatter chart of score against time to result. ' +
-    props.products
+    ranked.value
       .map((p) => `${p.brand} ${p.model}: score ${p.score}, ${p.ttr_days} days`)
       .join(', ') +
     '.',
@@ -33,38 +38,39 @@ const xBounds = computed(() => {
 
 const option = computed(() => ({
   animation: !prefersReducedMotion,
-  animationDuration: 400,
-  grid: { left: 8, right: 24, top: 28, bottom: 44 },
+  animationDuration: 500,
+  grid: { left: 46, right: 24, top: 30, bottom: 56 },
   xAxis: {
     type: 'value',
     name: 'Time to result (days)',
     nameLocation: 'middle',
-    nameGap: 30,
-    nameTextStyle: { color: chartColors.muted, fontFamily: chartFonts.body, fontSize: 12 },
+    nameGap: 34,
+    nameTextStyle: { color: chartColors.inkSoft, fontFamily: chartFonts.body, fontSize: 12.5 },
     min: xBounds.value.min,
     max: xBounds.value.max,
     interval: 0.5,
-    axisLabel: { color: chartColors.muted, fontFamily: chartFonts.body, fontSize: 12 },
-    splitLine: { lineStyle: { color: chartColors.hairline } },
+    axisLine: { show: false },
+    axisTick: { show: false },
+    axisLabel: { color: chartColors.faint, fontFamily: chartFonts.mono, fontSize: 11.5 },
+    splitLine: { lineStyle: { color: chartColors.lineSoft } },
   },
   yAxis: {
     type: 'value',
-    name: 'Score',
     min: 50,
     max: 100,
-    nameTextStyle: { color: chartColors.muted, fontFamily: chartFonts.body, fontSize: 12 },
-    axisLabel: { color: chartColors.muted, fontFamily: chartFonts.body, fontSize: 12 },
-    splitLine: { lineStyle: { color: chartColors.hairline } },
+    interval: 10,
+    axisLabel: { color: chartColors.faint, fontFamily: chartFonts.mono, fontSize: 11.5 },
+    splitLine: { lineStyle: { color: chartColors.lineSoft } },
   },
   tooltip: {
     trigger: 'item',
     backgroundColor: chartColors.ink,
     borderWidth: 0,
-    borderRadius: 6,
+    borderRadius: 8,
     padding: [10, 14],
-    textStyle: { color: '#f4f6f8', fontFamily: chartFonts.body, fontSize: 13 },
+    textStyle: { color: '#edefec', fontFamily: chartFonts.body, fontSize: 13 },
     formatter: (params: { dataIndex: number }) => {
-      const p = props.products[params.dataIndex]
+      const p = ranked.value[params.dataIndex]
       if (!p) return ''
       return [
         `<strong>${p.brand} ${p.model}</strong>`,
@@ -77,19 +83,23 @@ const option = computed(() => ({
     {
       type: 'scatter',
       cursor: 'default',
-      data: props.products.map((p) => [p.ttr_days, p.score]),
-      symbolSize: 14,
-      itemStyle: { color: chartColors.blue, borderColor: chartColors.paper, borderWidth: 2 },
+      data: ranked.value.map((p, i) => ({
+        value: [p.ttr_days, p.score],
+        itemStyle: { color: RANK_COLORS[i] ?? chartColors.teal300 },
+      })),
+      symbolSize: 18,
       label: {
         show: true,
         position: 'top',
+        distance: 10,
         formatter: (params: { dataIndex: number }) => {
-          const p = props.products[params.dataIndex]
+          const p = ranked.value[params.dataIndex]
           return p ? `${p.brand} ${p.model}` : ''
         },
         color: chartColors.ink,
         fontFamily: chartFonts.body,
-        fontSize: isNarrow.value ? 10 : 11,
+        fontWeight: 600,
+        fontSize: isNarrow.value ? 10 : 13,
       },
     },
   ],
@@ -97,7 +107,10 @@ const option = computed(() => ({
 </script>
 
 <template>
-  <DashPanel title="Score vs time to result" note="Top left is best: high score, fast turnaround">
+  <DashPanel title="Score vs. time to result" note="Each point is one tested model">
+    <template #actions>
+      <span class="legend-quadrant">Top left is best</span>
+    </template>
     <VChart
       class="chart"
       :option="option"
@@ -111,6 +124,21 @@ const option = computed(() => ({
 
 <style scoped>
 .chart {
-  height: 280px;
+  height: 300px;
+}
+/* A quiet teal pill that names the winning corner of the plot */
+.legend-quadrant {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--teal-100);
+  color: var(--teal-700);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+.legend-quadrant::before {
+  content: '↖';
 }
 </style>

@@ -37,50 +37,48 @@ defineEmits<{ action: [] }>()
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 10px;
-  max-width: 380px;
-  padding: 24px;
+  gap: 12px;
+  max-width: 400px;
+  padding: 26px;
 }
 .lock-box {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: #fff;
-  color: var(--ink);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-900));
+  color: #fff;
 }
 h3 {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 p {
   margin: 0;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--ink-soft);
 }
 .cta {
-  margin-top: 6px;
-  font: inherit;
+  margin-top: 4px;
+  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  background: var(--accent);
+  background: var(--teal-900);
   border: none;
   border-radius: var(--radius);
-  padding: 8px 18px;
+  padding: 10px 20px;
   cursor: pointer;
-  transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+  transition: background-color 0.15s ease;
 }
 .cta:hover {
-  background: var(--accent-hover);
+  background: var(--teal-700);
 }
 .cta:active {
-  background: color-mix(in srgb, var(--accent) 78%, black);
+  transform: translateY(1px);
 }
 </style>

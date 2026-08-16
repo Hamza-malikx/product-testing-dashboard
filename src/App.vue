@@ -30,8 +30,6 @@ try {
 // Everything below only ever sees the data this plan is allowed to see
 const view = computed(() => (payload ? selectDataForTier(payload, tier.value) : null))
 
-// Small feedback message when a download starts.
-// The real PDF generation arrives in the report service step.
 // Feedback toast for downloads
 const toast = ref('')
 let toastTimer: ReturnType<typeof setTimeout> | undefined
@@ -77,83 +75,96 @@ async function onRowDownload(product: Product) {
   <TierSelect />
 
   <main v-if="view" class="page">
-    <header class="masthead">
-      <p class="eyebrow microlabel">Category report</p>
-      <div class="title-row">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Category report</p>
         <h1>{{ view.category }}</h1>
-        <span class="plan-chip">{{ TIER_LABELS[tier] }} plan</span>
+        <p class="hero-sub">
+          <span class="mono tnum">{{ view.aggregate_stats.total_tested }}</span> models tested ·
+          independent lab data
+        </p>
       </div>
-      <p class="subtitle tnum">
-        {{ view.aggregate_stats.total_tested }} models tested · independent lab data
-      </p>
+      <span class="plan-badge mono">{{ TIER_LABELS[tier] }} plan</span>
     </header>
 
     <!-- Keyed by plan: switching fades the old view out and the new one in.
          The explicit duration makes Vue use a timer, so a missed browser
          transition event can never leave the view stuck mid-switch -->
     <Transition name="tier-fade" mode="out-in" :duration="180">
-    <div :key="tier">
-    <KpiRow :stats="view.aggregate_stats" />
-    <FeatureGate capability="view:charts">
-      <ScoreChart
-        v-if="view.products"
-        :products="view.products"
-        :category-average="view.aggregate_stats.avg_score"
-      />
-      <FeatureGate capability="view:advanced-charts">
-        <EfficiencyChart v-if="view.products" :products="view.products" />
+      <div :key="tier">
+        <KpiRow :stats="view.aggregate_stats" />
 
-        <template #locked>
-          <EfficiencyChart :products="DECOY_PRODUCTS" />
-        </template>
-
-        <template #prompt>
-          <UpgradePrompt
-            title="The efficiency view is on Enterprise"
-            body="See which brands deliver high scores fast. Enterprise adds the score versus time-to-result view and full PDF test reports."
-            @action="setTier('enterprise')"
+        <FeatureGate capability="view:charts">
+          <ScoreChart
+            v-if="view.products"
+            :products="view.products"
+            :category-average="view.aggregate_stats.avg_score"
           />
-        </template>
-      </FeatureGate>
-      <ProductTable
-        v-if="view.products"
-        :products="view.products"
-        :total-tested="view.aggregate_stats.total_tested"
-        @download="onRowDownload"
-        @download-category="downloadCategoryReport"
-      />
+          <FeatureGate capability="view:advanced-charts">
+            <EfficiencyChart v-if="view.products" :products="view.products" />
 
-      <template #locked>
-        <ScoreChart
-          :products="DECOY_PRODUCTS"
-          :category-average="view.aggregate_stats.avg_score"
-        />
-      </template>
+            <template #locked>
+              <EfficiencyChart :products="DECOY_PRODUCTS" />
+            </template>
 
-      <template #prompt>
-        <UpgradePrompt
-          title="Model-level results are on Premium"
-          body="Your plan includes category averages. Premium adds interactive score and time-to-result comparisons for all 15 tested models."
-          @action="setTier('premium')"
-        />
-      </template>
-    </FeatureGate>
+            <template #prompt>
+              <UpgradePrompt
+                title="The efficiency view is on Enterprise"
+                body="See which brands deliver high scores fast. Enterprise adds the score versus time-to-result view and full PDF test reports."
+                @action="setTier('enterprise')"
+              />
+            </template>
+          </FeatureGate>
+          <ProductTable
+            v-if="view.products"
+            :products="view.products"
+            :total-tested="view.aggregate_stats.total_tested"
+            @download="onRowDownload"
+            @download-category="downloadCategoryReport"
+          />
 
-    <p v-if="!can('view:charts')" class="plans-strip">
-      Premium adds model-level results · Enterprise adds the efficiency view and PDF test reports.
-    </p>
-    </div>
+          <template #locked>
+            <ScoreChart
+              :products="DECOY_PRODUCTS"
+              :category-average="view.aggregate_stats.avg_score"
+            />
+          </template>
+
+          <template #prompt>
+            <UpgradePrompt
+              title="Model-level results are on Premium"
+              body="Your plan includes category averages. Premium adds interactive score and time-to-result comparisons for all 15 tested models."
+              @action="setTier('premium')"
+            />
+          </template>
+        </FeatureGate>
+
+        <p v-if="!can('view:charts')" class="plans-strip">
+          Premium adds model-level results · Enterprise adds the efficiency view and PDF test
+          reports.
+        </p>
+      </div>
     </Transition>
 
     <!-- The report's closing key: constant on every plan, so it sits
          outside the fade. The band thresholds come from bands.ts -->
     <footer class="colophon">
-      <span class="microlabel">Rating scale</span>
-      <span class="key-item tnum"><span class="swatch excellent" aria-hidden="true"></span>Excellent 85-100</span>
-      <span class="key-item tnum"><span class="swatch good" aria-hidden="true"></span>Good 70-84</span>
-      <span class="key-item tnum"><span class="swatch fair" aria-hidden="true"></span>Fair 55-69</span>
-      <span class="key-item tnum"><span class="swatch poor" aria-hidden="true"></span>Poor below 55</span>
-      <span class="colophon-note">Illustrative sample data · technical demonstration</span>
+      <div class="scale">
+        <span class="microlabel">Rating scale</span>
+        <span class="scale-item"
+          ><span class="swatch excellent" aria-hidden="true"></span>Excellent 85-100</span
+        >
+        <span class="scale-item"
+          ><span class="swatch good" aria-hidden="true"></span>Good 70-84</span
+        >
+        <span class="scale-item"
+          ><span class="swatch fair" aria-hidden="true"></span>Fair 55-69</span
+        >
+        <span class="scale-item"
+          ><span class="swatch poor" aria-hidden="true"></span>Poor below 55</span
+        >
+      </div>
+      <p class="colophon-note">Illustrative sample data · technical demonstration</p>
     </footer>
   </main>
 
@@ -163,97 +174,130 @@ async function onRowDownload(product: Product) {
 
   <!-- Announces plan changes to screen readers -->
   <p class="sr-only" aria-live="polite">Now viewing as {{ TIER_LABELS[tier] }} plan</p>
-  <div v-if="toast" class="toast tnum" role="status">{{ toast }}</div>
+  <div v-if="toast" class="toast mono" role="status">{{ toast }}</div>
 </template>
 
 <style scoped>
 .page {
-  max-width: 1140px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 32px 24px 64px;
+  padding: 44px 40px 80px;
 }
-.masthead {
-  border-bottom: 3px solid var(--accent);
-  padding-bottom: 20px;
-  /* The petrol rule itself frames the KPI strip below, so no gap here */
-  margin-bottom: 0;
-}
-.eyebrow {
-  margin: 0 0 4px;
-}
-.title-row {
+
+/* HERO */
+.hero {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: flex-end;
   gap: 16px;
   flex-wrap: wrap;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--ink);
+}
+/* The short rule before the eyebrow is the page's one flourish */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal-700);
+}
+.eyebrow::before {
+  content: '';
+  width: 16px;
+  height: 2px;
+  background: var(--teal-700);
 }
 h1 {
-  font-size: 42px;
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.015em;
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 0 0 10px;
 }
-/* Set as a printed stamp, not a button: it is status, not a control */
-.plan-chip {
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  border-radius: var(--radius-badge);
-  padding: 2px 8px;
+.hero-sub {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+.hero-sub .mono {
+  color: var(--ink);
+  font-weight: 600;
+}
+.plan-badge {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  padding: 8px 14px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
-.subtitle {
-  margin: 6px 0 0;
-  color: var(--muted);
-}
-.load-error {
-  color: var(--band-poor);
-}
+
 .plans-strip {
-  margin: 12px 0 0;
+  margin: 20px 0 0;
   text-align: center;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--ink-soft);
 }
+.load-error {
+  color: var(--red);
+}
+
+/* COLOPHON */
 .colophon {
-  margin-top: 28px;
-  padding-top: 14px;
-  border-top: 1px solid var(--hairline);
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px 18px;
-  font-size: 12px;
-  color: var(--muted);
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
 }
-.key-item {
+.scale {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.scale-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
 }
 .swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
 }
 .swatch.excellent {
-  background: var(--band-excellent);
+  background: var(--teal-900);
 }
 .swatch.good {
-  background: var(--band-good);
+  background: var(--teal-300);
 }
 .swatch.fair {
-  background: var(--band-fair);
+  background: var(--amber);
 }
 .swatch.poor {
-  background: var(--band-poor);
+  background: var(--red);
 }
 .colophon-note {
-  margin-left: auto;
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-faint);
 }
+
+/* MOTION AND FEEDBACK */
 .tier-fade-enter-active,
 .tier-fade-leave-active {
   transition: opacity 0.18s ease;
@@ -268,10 +312,24 @@ h1 {
   left: 50%;
   transform: translateX(-50%);
   background: var(--ink);
-  color: #f4f6f8;
+  color: #edefec;
   font-size: 13px;
-  padding: 9px 16px;
+  padding: 10px 18px;
   border-radius: var(--radius);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 24px -8px rgba(16, 22, 26, 0.5);
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding: 28px 18px 60px;
+  }
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  h1 {
+    font-size: 38px;
+  }
 }
 </style>

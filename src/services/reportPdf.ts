@@ -4,19 +4,19 @@ import { scoreBand } from '@/config/bands'
 import type { AggregateStats, Product } from '@/types/models'
 
 // Colors kept in sync with src/assets/main.css
-const INK = '#1a1f24'
-const MUTED = '#5c6670'
-const ACCENT = '#0d3a4e'
-const NAVY = '#24537b'
-const HAIRLINE = '#e4e6e3'
+const INK = '#10161a'
+const MUTED = '#5b6b70'
+const ACCENT = '#0b5d50'
+const NAVY = '#0e7c6b' // chart bars, the mid teal
+const HAIRLINE = '#e2e6e2'
 const PAPER_WHITE = '#ffffff'
 
-// Verdict band colors, same as the app's badges
+// Verdict band colors, same as the app's chips
 const BAND_COLORS: Record<'excellent' | 'good' | 'fair' | 'poor', { bg: string; fg: string }> = {
-  excellent: { bg: '#0d6631', fg: PAPER_WHITE },
-  good: { bg: '#a3cc84', fg: INK },
-  fair: { bg: '#e7a100', fg: INK },
-  poor: { bg: '#b3251e', fg: PAPER_WHITE },
+  excellent: { bg: '#0b5d50', fg: PAPER_WHITE },
+  good: { bg: '#def0ea', fg: '#0b5d50' },
+  fair: { bg: '#fbedd3', fg: '#7a5308' },
+  poor: { bg: '#f8e2dd', fg: '#7c2a1d' },
 }
 
 export interface ReportOptions {

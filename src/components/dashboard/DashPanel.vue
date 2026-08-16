@@ -6,47 +6,47 @@ defineProps<{
 </script>
 
 <template>
-  <section class="panel" :aria-label="title">
-    <div class="panel-head">
-      <h2>{{ title }}</h2>
-      <div class="head-right">
-        <p v-if="note" class="note tnum">{{ note }}</p>
-        <slot name="actions" />
+  <section class="card" :aria-label="title">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">{{ title }}</h2>
+        <p v-if="note" class="card-note">{{ note }}</p>
       </div>
+      <slot name="actions" />
     </div>
     <slot />
   </section>
 </template>
 
 <style scoped>
-.panel {
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  margin-top: 28px;
-  background: #fff;
+.card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  margin-top: 24px;
+  padding: 32px;
 }
-.panel-head {
+.card-head {
   display: flex;
-  align-items: baseline;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 28px;
 }
-h2 {
-  font-size: 18px;
-  font-weight: 700;
+.card-title {
+  font-size: 20px;
+  font-weight: 600;
 }
-.note {
-  margin: 0;
-  font-size: 13px;
-  color: var(--muted);
+.card-note {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
 }
-.head-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
+
+@media (max-width: 760px) {
+  .card {
+    padding: 20px;
+  }
 }
 </style>

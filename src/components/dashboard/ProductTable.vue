@@ -28,12 +28,22 @@ const bestId = computed(() => sorted.value[0]?.id)
       <button
         v-if="can('download:reports')"
         type="button"
-        class="primary-btn"
+        class="download-all"
         @click="emit('downloadCategory')"
       >
-        Download category report (PDF)
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        Download category report
       </button>
     </template>
+
     <div class="table-scroll">
       <table>
         <thead>
@@ -41,24 +51,24 @@ const bestId = computed(() => sorted.value[0]?.id)
             <th scope="col" class="microlabel">Brand and model</th>
             <th scope="col" class="microlabel">Score</th>
             <th scope="col" class="microlabel">Time to result</th>
-            <th scope="col" class="microlabel">Report</th>
+            <th scope="col" class="microlabel report-col">Report</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="p in sorted" :key="p.id">
             <th scope="row" class="name-cell">
-              <span class="brand">{{ p.brand }}</span>
-              <span class="model">{{ p.model }}</span>
-              <span v-if="p.id === bestId" class="best-flag">Best in test</span>
+              <span class="model-name">{{ p.brand }}</span>
+              <span class="model-code mono">{{ p.model }}</span>
+              <span v-if="p.id === bestId" class="best-tag">★ Best in test</span>
             </th>
-            <td><ScoreBadge :score="p.score" show-label /></td>
-            <td class="tnum">{{ p.ttr_days }} days</td>
-            <td>
+            <td><ScoreBadge :score="p.score" /></td>
+            <td class="time-val mono tnum">{{ p.ttr_days }} days</td>
+            <td class="report-col">
               <!-- Enterprise: a real, working download button -->
               <button
                 v-if="can('download:reports')"
                 type="button"
-                class="dl-btn"
+                class="pdf-btn"
                 :aria-label="`Download report ${p.download_id} for ${p.brand} ${p.model}`"
                 @click="emit('download', p)"
               >
@@ -70,7 +80,7 @@ const bestId = computed(() => sorted.value[0]?.id)
               <span v-else class="tip-wrap">
                 <button
                   type="button"
-                  class="dl-btn locked"
+                  class="pdf-btn locked"
                   aria-disabled="true"
                   :aria-describedby="`dl-tip-${p.id}`"
                 >
@@ -102,26 +112,28 @@ const bestId = computed(() => sorted.value[0]?.id)
 </template>
 
 <style scoped>
-.primary-btn {
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+.download-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ink);
   color: #fff;
-  background: var(--accent);
   border: none;
   border-radius: var(--radius);
-  padding: 7px 14px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 11px 18px;
   cursor: pointer;
-  transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+  transition: background-color 0.15s ease;
 }
-.primary-btn:hover {
-  background: var(--accent-hover);
+.download-all:hover {
+  background: #000;
 }
-.primary-btn:active {
-  background: color-mix(in srgb, var(--accent) 78%, black);
+.download-all:active {
+  transform: translateY(1px);
 }
+
 /* Scrolling clips the focus tooltips, so the table only becomes
    scrollable on narrow screens where it truly needs to. */
 .table-scroll {
@@ -135,95 +147,90 @@ const bestId = computed(() => sorted.value[0]?.id)
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
 }
-thead th {
+th {
   text-align: left;
-  padding: 10px 12px;
-  border-bottom: 2px solid var(--ink);
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid var(--ink);
 }
-/* Columns sit flush with the panel edges, like the KPI strip:
-   first column on the title's left axis, actions on the right edge */
-thead th:first-child,
-tbody .name-cell {
-  padding-left: 0;
-}
-thead th:last-child,
-tbody td:last-child {
-  padding-right: 0;
-  text-align: right;
+td,
+tbody th {
+  text-align: left;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 14.5px;
+  vertical-align: middle;
+  font-weight: 400;
 }
 /* The panel's own border closes the table; no floating last rule */
-tbody tr:last-child th,
-tbody tr:last-child td {
+tbody tr:last-child td,
+tbody tr:last-child th {
   border-bottom: none;
 }
-tbody tr {
-  transition: background-color 0.12s ease;
+.report-col {
+  text-align: right;
 }
-tbody tr:hover {
-  background: #f5f6f4;
+.model-name {
+  font-weight: 700;
+  font-size: 15px;
 }
-tbody th,
-tbody td {
-  text-align: left;
-  padding: 12px;
-  border-bottom: 1px solid var(--hairline);
-  vertical-align: middle;
+.model-code {
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-size: 13px;
+  margin-left: 6px;
 }
-.name-cell {
-  font-weight: 600;
-}
-.model {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--muted);
-  margin-left: 8px;
-}
-/* Set like a printed award stamp */
-.best-flag {
-  margin-left: 10px;
-  border: 1px solid var(--ink);
-  border-radius: var(--radius-badge);
-  padding: 2px 8px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+/* The one editorial award on the page, set like a paper seal */
+.best-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  background: #fff7e0;
+  color: #8a5a00;
+  border: 1px solid #f0d68a;
+  padding: 3px 8px;
+  border-radius: 5px;
+  margin-left: 10px;
   white-space: nowrap;
 }
-.dl-btn {
+.time-val {
+  color: var(--ink-soft);
+}
+.pdf-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 7px;
   color: var(--ink);
-  background: #fff;
-  border: 1px solid var(--ink);
-  border-radius: var(--radius);
-  padding: 5px 12px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12.5px;
+  padding: 8px 14px;
   cursor: pointer;
-  transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+  transition: all 0.15s ease;
 }
-.dl-btn:hover {
+.pdf-btn:hover {
+  border-color: var(--ink);
   background: var(--ink);
   color: #fff;
 }
-.dl-btn:not(.locked):active {
+.pdf-btn:not(.locked):active {
   transform: translateY(1px);
 }
-.dl-btn.locked {
-  color: var(--muted);
-  border-color: var(--hairline);
+.pdf-btn.locked {
+  color: var(--ink-faint);
   cursor: not-allowed;
 }
-.dl-btn.locked:hover {
-  background: #fff;
-  color: var(--muted);
+.pdf-btn.locked:hover {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink-faint);
 }
 /* Tooltip: appears on mouse hover and on keyboard focus */
 .tip-wrap {
@@ -237,10 +244,12 @@ tbody td {
   z-index: 5;
   width: 210px;
   background: var(--ink);
-  color: #f4f6f8;
+  color: #edefec;
   font-size: 12.5px;
+  font-weight: 400;
   line-height: 1.4;
-  padding: 8px 10px;
+  text-align: left;
+  padding: 9px 12px;
   border-radius: var(--radius);
   opacity: 0;
   visibility: hidden;

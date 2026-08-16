@@ -38,9 +38,9 @@ const { can } = useTier()
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(252, 252, 251, 0.6);
+  background: rgba(245, 246, 243, 0.62);
   backdrop-filter: blur(7px) saturate(0.8);
   -webkit-backdrop-filter: blur(7px) saturate(0.8);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 </style>

@@ -1,30 +1,35 @@
 /* Design tokens. Every color in the app comes from here. */
 :root {
   /* Surfaces and text */
-  --paper: #fcfcfb; /* page background, a cold white */
-  --ink: #1a1f24; /* headings and values */
-  --muted: #5c6670; /* labels, captions, axis text */
-  --hairline: #e4e6e3; /* thin divider lines and gridlines */
+  --bg: #f5f6f3; /* page background, a soft lab paper */
+  --paper: #ffffff; /* cards */
+  --ink: #10161a; /* headings and values */
+  --ink-soft: #5b6b70; /* body text, captions */
+  --ink-faint: #93a0a3; /* labels, axis text */
+  --line: #e2e6e2; /* borders and dividers */
+  --line-soft: #edefeb; /* inner table rules */
 
-  /* Brand and data */
-  --accent: #0d3a4e; /* ONLY for: header rule, primary button, active chip, focus ring */
-  /* Hover state is generated from the accent (about 11% darker), so a
-     future accent swap stays a one-line change */
-  --accent-hover: color-mix(in srgb, var(--accent) 89%, black);
-  --chart-blue: #24537b; /* the single data color for charts */
+  /* Brand: a testing-lab teal, used as one ramp from deep to pale */
+  --teal-900: #0b5d50;
+  --teal-700: #0e7c6b;
+  --teal-500: #159c86;
+  --teal-300: #6fc7b4;
+  --teal-100: #def0ea;
 
-  /* Score badge bands. The badge always shows the number too. */
-  --band-excellent: #0d6631; /* 85-100, white text */
-  --band-good: #a3cc84; /* 70-84, light green, ink text */
-  --band-fair: #e7a100; /* 55-69, ink text */
-  --band-poor: #b3251e; /* below 55, white text */
+  /* Verdict colors. Chips always print the word too,
+     so color is never the only signal. */
+  --amber: #c9840a;
+  --amber-100: #fbedd3;
+  --red: #b8402d;
+  --red-100: #f8e2dd;
 
   /* Shape and type */
-  --radius: 6px; /* components */
-  --radius-badge: 4px; /* badges only */
-  --font-display: 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif;
-  --font-body: 'Public Sans', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  --radius: 8px; /* controls */
+  --radius-lg: 14px; /* cards */
+  --radius-pill: 100px; /* chips and badges */
+  --font-display: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 }
 
 *,
@@ -35,7 +40,11 @@
 
 body {
   margin: 0;
-  background: var(--paper);
+  /* Faint horizontal rules, like ruled lab paper. Pure decoration,
+     kept to 2.5% opacity so it reads as texture, not lines. */
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(16, 22, 26, 0.025) 40px),
+    var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 15px;
@@ -50,30 +59,35 @@ h3 {
   margin: 0;
 }
 
+/* Data and codes are set in the mono face, like lab readings */
+.mono {
+  font-family: var(--font-mono);
+}
+
 /* Numbers line up in columns: every digit takes the same width */
 .tnum {
   font-variant-numeric: tabular-nums;
 }
 
-/* One label voice for the whole page: eyebrow, KPI labels, table
-   headers, and the rating-scale key all share this spec */
+/* One label voice for the whole page: eyebrows, stat labels,
+   table headers, and the rating-scale key */
 .microlabel {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink-faint);
 }
 
 /* Selected text stays in character */
 ::selection {
-  background: var(--accent);
-  color: var(--paper);
+  background: var(--teal-100);
+  color: var(--teal-900);
 }
 
-/* One visible focus style everywhere, in the petrol accent */
+/* One visible focus style everywhere */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--teal-700);
   outline-offset: 2px;
 }
 
