@@ -75,26 +75,31 @@ const bestId = computed(() => sorted.value[0]?.id)
       </span>
     </template>
 
+    <!-- The roles are stated explicitly because the narrow layout below
+         changes these elements to blocks, and that would otherwise strip
+         the table semantics that assistive tech relies on. -->
     <div class="table-scroll">
-      <table>
+      <table role="table">
         <thead>
-          <tr>
-            <th scope="col" class="microlabel">Brand and model</th>
-            <th scope="col" class="microlabel">Score</th>
-            <th scope="col" class="microlabel">Time to result</th>
-            <th scope="col" class="microlabel report-col">Report</th>
+          <tr role="row">
+            <th scope="col" role="columnheader" class="microlabel">Brand and model</th>
+            <th scope="col" role="columnheader" class="microlabel">Score</th>
+            <th scope="col" role="columnheader" class="microlabel">Time to result</th>
+            <th scope="col" role="columnheader" class="microlabel report-col">Report</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="p in sorted" :key="p.id">
-            <th scope="row" class="name-cell">
+          <tr v-for="p in sorted" :key="p.id" role="row">
+            <th scope="row" role="rowheader" class="name-cell">
               <span class="model-name">{{ p.brand }}</span>
               <span class="model-code mono">{{ p.model }}</span>
               <span v-if="p.id === bestId" class="best-tag">★ Best in test</span>
             </th>
-            <td><ScoreBadge :score="p.score" /></td>
-            <td class="time-val mono tnum">{{ p.ttr_days }} days</td>
-            <td class="report-col">
+            <td role="cell" data-label="Score"><ScoreBadge :score="p.score" /></td>
+            <td role="cell" data-label="Time to result" class="time-val mono tnum">
+              {{ p.ttr_days }} days
+            </td>
+            <td role="cell" class="report-col">
               <!-- Enterprise: a real, working download button -->
               <button
                 v-if="can('download:reports')"
@@ -179,15 +184,10 @@ const bestId = computed(() => sorted.value[0]?.id)
   transform: none;
 }
 
-/* Scrolling clips the focus tooltips, so the table only becomes
-   scrollable on narrow screens where it truly needs to. */
+/* Scrolling would clip the focus tooltips, and the narrow layout below
+   stacks instead of scrolling, so this never needs to scroll at all. */
 .table-scroll {
   overflow: visible;
-}
-@media (max-width: 720px) {
-  .table-scroll {
-    overflow-x: auto;
-  }
 }
 table {
   width: 100%;
@@ -304,5 +304,87 @@ tbody tr:last-child th {
 .tip-wrap:focus-within .tip {
   opacity: 1;
   visibility: visible;
+}
+
+/* NARROW SCREENS: four columns cannot fit, and a sideways scroll makes
+   the reader work. Each row becomes its own card instead, with the
+   column name printed beside each value. */
+@media (max-width: 640px) {
+  /* The header row is redundant once every value carries its own label */
+  thead {
+    display: none;
+  }
+  tbody,
+  tbody tr,
+  tbody th,
+  tbody td {
+    display: block;
+    width: 100%;
+  }
+  tbody tr {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  tbody tr:hover {
+    background: none; /* hover means nothing on a touch screen */
+  }
+  tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  /* The brand and model become the card heading. Laid out as a flex row
+     so the gap between the name, the code and the award tag stays even
+     whether they fit on one line or wrap onto two. */
+  .name-cell {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--line-soft);
+    margin-bottom: 10px;
+  }
+  .model-code,
+  .best-tag {
+    margin-left: 0; /* the flex gap spaces these now */
+  }
+
+  /* Every other cell prints its column name on the left */
+  tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    border-bottom: none;
+  }
+  tbody td[data-label]::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* The action gets its own full width row at the foot of the card */
+  .report-col {
+    display: block;
+    text-align: left;
+    padding-top: 12px;
+  }
+  .tip-wrap,
+  .pdf-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .tip {
+    width: auto;
+    left: 0;
+    right: 0;
+    text-align: center;
+  }
 }
 </style>
